@@ -21,11 +21,6 @@ typedef struct ChunkMesh {
         size_t count;
         size_t capacity;
     } vertices;
-    struct {
-        size_t *items;
-        size_t count;
-        size_t capacity;
-    } indices;
 } ChunkMesh;
 
 #define CHUNK_SZ (32)

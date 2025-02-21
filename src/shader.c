@@ -61,7 +61,7 @@ int shader_compile(GLuint *id, GLenum type, const char *srcpath)
     glGetShaderiv(id_, GL_COMPILE_STATUS, &success);
     if (!success) {
         glGetShaderInfoLog(id_, 512, NULL, infomsg);
-        verr("Failed to compile shader: %s\n", infomsg);
+        verr("Failed to compile shader: %s", infomsg);
         return -2;
     }
     vinfo("Compiled shader '%s'", srcpath);
@@ -137,6 +137,15 @@ void shader_set_uniform_mat4(Shader shader, const char *name, mat4 value)
                        1,
                        GL_FALSE,
                        (const GLfloat *) value);
+    gl_check_error();
+}
+
+void shader_set_uniform_vec3s(Shader shader, const char *name, vec3s value)
+{
+    shader_use(shader);
+    glUniform3fv(get_uniform_location(shader, name), 
+                 1, 
+                 (const GLfloat *)value.raw);
     gl_check_error();
 }
 

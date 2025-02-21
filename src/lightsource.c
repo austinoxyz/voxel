@@ -4,9 +4,15 @@
 static LightSource s_lightsource;
 static bool s_lightsource_initialized = false;
 
-void lightsource_compute_sphere(vec4s color);
+void lightsource_compute_sphere(vec3s color);
 
-int lightsource_init(float radius, vec3s pos, vec4s color)
+LightSource* lightsource_get()
+{
+    assert(s_lightsource_initialized);
+    return &s_lightsource;
+}
+
+int lightsource_init(float radius, vec3s pos, vec3s color)
 {
     assert(!s_lightsource_initialized);
 
@@ -114,7 +120,7 @@ void lightsource_render(void)
     glUseProgram(0);
 }
 
-void lightsource_compute_sphere(vec4s color) {
+void lightsource_compute_sphere(vec3s color) {
     static const float PI = 3.1415927f;
 
     static const int sector_count = 36;
@@ -138,7 +144,7 @@ void lightsource_compute_sphere(vec4s color) {
             ny = y * length_inv;
             nz = z * length_inv;
             const LightSourceVertex v = (LightSourceVertex) {
-                { x, y, z }, { nx, ny, nz }, { color.r, color.g, color.b, color.a }
+                { x, y, z }, { nx, ny, nz }, { color.r, color.g, color.b, 1 }
             };
             da_append(&s_lightsource.vertices, v);
         }

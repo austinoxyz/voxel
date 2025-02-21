@@ -20,17 +20,17 @@
 #define warn(fmt) \
     __log_internal(__FUNCTION__, __FILE__, __LINE__, 1, "%s", fmt)
 
+#define err(fmt) \
+    __log_internal(__FUNCTION__, __FILE__, __LINE__, 2, "%s", fmt);
+
 #define vinfo(fmt, ...) \
     __log_internal(__FUNCTION__, __FILE__, __LINE__, 0, fmt, __VA_ARGS__)
 
 #define vwarn(fmt, ...) \
     __log_internal(__FUNCTION__, __FILE__, __LINE__, 1, fmt, __VA_ARGS__)
 
-#define err(fmt) \
-    __log_internal(__FUNCTION__, __FILE__, __LINE__, 2, "%s", fmt);
-
 #define verr(fmt, ...) \
-    __log_internal(__FUNCTION__, __FILE__, __LINE__, 2, "%s", fmt);
+    __log_internal(__FUNCTION__, __FILE__, __LINE__, 2, fmt, __VA_ARGS__);
 
 void cleanup_and_exit(int exitcode);
 

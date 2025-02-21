@@ -1,6 +1,7 @@
 #include "chunk.h"
 #include "shader.h"
 #include "camera.h"
+#include "lightsource.h"
 
 // FIXME: Used for setting each new chunk's id.
 //        Temporary until hashing chunk's pos for id
@@ -30,7 +31,6 @@ int init_chunk_renderer(void)
 
     glBindVertexArray(s_chunk_vao);
     glBindBuffer(GL_ARRAY_BUFFER, s_chunk_vbo);
-
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 
                           sizeof(BlockVertex),
@@ -43,7 +43,9 @@ int init_chunk_renderer(void)
 
     mat4 model;
     glm_mat4_identity(model);
+
     shader_set_uniform_mat4(s_chunk_shader, "model", model);
+    shader_set_uniform_vec3s(s_chunk_shader, "lightColor", lightsource_get()->color);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
@@ -187,7 +189,6 @@ int chunkmesh_new(ChunkMesh *mesh)
     glBindVertexArray(s_chunk_vao);
 
     da_init(&mesh->vertices);
-    da_init(&mesh->indices);
 
     glBindVertexArray(0);
     glUseProgram(0);
@@ -199,7 +200,6 @@ void chunkmesh_delete(ChunkMesh *mesh)
     assert(mesh);
     glUseProgram(s_chunk_shader);
     da_free(mesh->vertices);
-    da_free(mesh->indices);
     glUseProgram(0);
 }
 

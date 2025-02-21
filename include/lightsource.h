@@ -14,7 +14,7 @@ typedef struct LightSource {
     GLuint vao, vbo, ebo;
     Shader shader;
     vec3s pos;
-    vec4s color;
+    vec3s color;
     float radius;
     struct {
         LightSourceVertex *items;
@@ -28,9 +28,10 @@ typedef struct LightSource {
     } indices;
 } LightSource;
 
-int lightsource_init(float radius, vec3s pos, vec4s color);
+int lightsource_init(float radius, vec3s pos, vec3s color);
 void lightsource_deinit(void);
 void lightsource_update(float dt);
 void lightsource_render(void);
+LightSource* lightsource_get(void);
 
 #endif

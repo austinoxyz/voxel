@@ -39,8 +39,9 @@ void init()
 
     camera_init((vec3){ 0, 0, 3 }, (vec3){ 0, 0, -1 }, 45.0f);
 
-    static const vec4s lightsource_color = (vec4s){ .r=0.909f, .g=0.733f, .b=0.145f, .a=1.0f };
-    if (0 > lightsource_init(1.0f, (vec3s){ .x=0, .y=2, .z=-3 }, lightsource_color)) {
+    static const vec3s lightsource_pos = (vec3s){ .x=0, .y=2, .z=-3 };
+    static const vec3s lightsource_color = (vec3s){ .r=0.909f, .g=0.733f, .b=0.145f };
+    if (0 > lightsource_init(1.0f, lightsource_pos, lightsource_color)) {
         err("Failed to initialize light source.");
         cleanup_and_exit(1);
     }
