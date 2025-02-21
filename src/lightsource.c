@@ -29,11 +29,6 @@ int lightsource_init(float radius, vec3s pos, vec3s color)
 
     mat4 model;
     glm_translate_make(model, &s_lightsource.pos.raw[0]);
-    /* (vec3){ */ 
-    /*     s_lightsource.pos.x, */ 
-    /*     s_lightsource.pos.y, */ 
-    /*     s_lightsource.pos.z */ 
-    /* }); */ 
     shader_set_uniform_mat4(s_lightsource.shader, "model", model);
 
     da_init(&s_lightsource.vertices);

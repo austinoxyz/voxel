@@ -3,11 +3,6 @@
 #include "camera.h"
 #include "lightsource.h"
 
-// FIXME: Used for setting each new chunk's id.
-//        Temporary until hashing chunk's pos for id
-//        mod the id for index into hashmap storing chunks?
-static size_t s_n_chunks = 0;
-
 static GLuint s_chunk_vao, s_chunk_vbo;
 static Shader s_chunk_shader;
 
@@ -36,7 +31,11 @@ int init_chunk_renderer(void)
                           sizeof(BlockVertex),
                           (GLvoid *) offsetof(BlockVertex, pos));
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE,
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,
+                          sizeof(BlockVertex),
+                          (GLvoid *) offsetof(BlockVertex, normal));
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE,
                           sizeof(BlockVertex),
                           (GLvoid *) offsetof(BlockVertex, color));
     glEnableVertexAttribArray(0);
@@ -46,6 +45,7 @@ int init_chunk_renderer(void)
 
     shader_set_uniform_mat4(s_chunk_shader, "model", model);
     shader_set_uniform_vec3s(s_chunk_shader, "lightColor", lightsource_get()->color);
+    shader_set_uniform_vec3s(s_chunk_shader, "lightPos",   lightsource_get()->pos);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
@@ -92,7 +92,6 @@ int chunk_new(Chunk *chunk, ivec2s pos)
         }
     }
 
-    chunk->id = s_n_chunks++; // FIXME
     chunk->blocks = blocks;
     chunk->pos = pos;
     chunk->dirty = false;
@@ -203,6 +202,13 @@ void chunkmesh_delete(ChunkMesh *mesh)
     glUseProgram(0);
 }
 
+BlockVertex make_block_vertex(vec3 pos, vec3 normal, vec4 color)
+{
+    return (BlockVertex) {
+        { pos[0], pos[1], pos[2] }, { normal[0], normal[1], normal[2] }, { color[0], color[1], color[2], color[3] }
+    };
+}
+
 void render_standard_block(Chunk *chunk, ivec3s pos, vec4s color)
 {
     assert(chunk);
@@ -211,58 +217,62 @@ void render_standard_block(Chunk *chunk, ivec3s pos, vec4s color)
     assert(pos.z >= 0 && pos.z < CHUNK_SZ);
 
     const float N = BLOCK_SIDELEN;
+    vec3 v0 = { pos.x*N,     pos.y*N,     pos.z*N };
+    vec3 v1 = { (pos.x+1)*N, pos.y*N,     pos.z*N };
+    vec3 v2 = { (pos.x+1)*N, (pos.y+1)*N, pos.z*N };
+    vec3 v3 = { pos.x*N,     (pos.y+1)*N, pos.z*N };
+    vec3 v4 = { pos.x*N,     pos.y*N,     (pos.z+1)*N };
+    vec3 v5 = { (pos.x+1)*N, pos.y*N,     (pos.z+1)*N };
+    vec3 v6 = { (pos.x+1)*N, (pos.y+1)*N, (pos.z+1)*N };
+    vec3 v7 = { pos.x*N,     (pos.y+1)*N, (pos.z+1)*N };
 
-    const BlockVertex v0 = { { pos.x*N,     pos.y*N,     pos.z*N },     { color.r, color.g, color.b, color.a } };
-    const BlockVertex v1 = { { (pos.x+1)*N, pos.y*N,     pos.z*N },     { color.r, color.g, color.b, color.a } };
-    const BlockVertex v2 = { { (pos.x+1)*N, (pos.y+1)*N, pos.z*N },     { color.r, color.g, color.b, color.a } };
-    const BlockVertex v3 = { { pos.x*N,     (pos.y+1)*N, pos.z*N },     { color.r, color.g, color.b, color.a } };
-    const BlockVertex v4 = { { pos.x*N,     pos.y*N,     (pos.z+1)*N }, { color.r, color.g, color.b, color.a } };
-    const BlockVertex v5 = { { (pos.x+1)*N, pos.y*N,     (pos.z+1)*N }, { color.r, color.g, color.b, color.a } };
-    const BlockVertex v6 = { { (pos.x+1)*N, (pos.y+1)*N, (pos.z+1)*N }, { color.r, color.g, color.b, color.a } };
-    const BlockVertex v7 = { { pos.x*N,     (pos.y+1)*N, (pos.z+1)*N }, { color.r, color.g, color.b, color.a } };
+    // back face (-z is far plane)
+    da_append(&chunk->mesh.vertices, make_block_vertex(v0, (vec3){ 0, 0, -1 }, &color.raw[0]));
+    da_append(&chunk->mesh.vertices, make_block_vertex(v1, (vec3){ 0, 0, -1 }, &color.raw[0]));
+    da_append(&chunk->mesh.vertices, make_block_vertex(v2, (vec3){ 0, 0, -1 }, &color.raw[0]));
+    da_append(&chunk->mesh.vertices, make_block_vertex(v2, (vec3){ 0, 0, -1 }, &color.raw[0]));
+    da_append(&chunk->mesh.vertices, make_block_vertex(v3, (vec3){ 0, 0, -1 }, &color.raw[0]));
+    da_append(&chunk->mesh.vertices, make_block_vertex(v0, (vec3){ 0, 0, -1 }, &color.raw[0]));
 
-    // back face
-    da_append(&chunk->mesh.vertices, v0);
-    da_append(&chunk->mesh.vertices, v1);
-    da_append(&chunk->mesh.vertices, v2);
-    da_append(&chunk->mesh.vertices, v2);
-    da_append(&chunk->mesh.vertices, v3);
-    da_append(&chunk->mesh.vertices, v0);
     // front face
-    da_append(&chunk->mesh.vertices, v4);
-    da_append(&chunk->mesh.vertices, v5);
-    da_append(&chunk->mesh.vertices, v6);
-    da_append(&chunk->mesh.vertices, v6);
-    da_append(&chunk->mesh.vertices, v7);
-    da_append(&chunk->mesh.vertices, v4);
+    da_append(&chunk->mesh.vertices, make_block_vertex(v4, (vec3){ 0, 0,  1 }, &color.raw[0]));
+    da_append(&chunk->mesh.vertices, make_block_vertex(v5, (vec3){ 0, 0,  1 }, &color.raw[0]));
+    da_append(&chunk->mesh.vertices, make_block_vertex(v6, (vec3){ 0, 0,  1 }, &color.raw[0]));
+    da_append(&chunk->mesh.vertices, make_block_vertex(v6, (vec3){ 0, 0,  1 }, &color.raw[0]));
+    da_append(&chunk->mesh.vertices, make_block_vertex(v7, (vec3){ 0, 0,  1 }, &color.raw[0]));
+    da_append(&chunk->mesh.vertices, make_block_vertex(v4, (vec3){ 0, 0,  1 }, &color.raw[0]));
+
     // left face
-    da_append(&chunk->mesh.vertices, v7);
-    da_append(&chunk->mesh.vertices, v3);
-    da_append(&chunk->mesh.vertices, v0);
-    da_append(&chunk->mesh.vertices, v0);
-    da_append(&chunk->mesh.vertices, v4);
-    da_append(&chunk->mesh.vertices, v7);
+    da_append(&chunk->mesh.vertices, make_block_vertex(v7, (vec3){ -1, 0, 0 }, &color.raw[0]));
+    da_append(&chunk->mesh.vertices, make_block_vertex(v3, (vec3){ -1, 0, 0 }, &color.raw[0]));
+    da_append(&chunk->mesh.vertices, make_block_vertex(v0, (vec3){ -1, 0, 0 }, &color.raw[0]));
+    da_append(&chunk->mesh.vertices, make_block_vertex(v0, (vec3){ -1, 0, 0 }, &color.raw[0]));
+    da_append(&chunk->mesh.vertices, make_block_vertex(v4, (vec3){ -1, 0, 0 }, &color.raw[0]));
+    da_append(&chunk->mesh.vertices, make_block_vertex(v7, (vec3){ -1, 0, 0 }, &color.raw[0]));
+
     // right face
-    da_append(&chunk->mesh.vertices, v6);
-    da_append(&chunk->mesh.vertices, v2);
-    da_append(&chunk->mesh.vertices, v1);
-    da_append(&chunk->mesh.vertices, v1);
-    da_append(&chunk->mesh.vertices, v5);
-    da_append(&chunk->mesh.vertices, v6);
-    // bottom face
-    da_append(&chunk->mesh.vertices, v0);
-    da_append(&chunk->mesh.vertices, v1);
-    da_append(&chunk->mesh.vertices, v5);
-    da_append(&chunk->mesh.vertices, v5);
-    da_append(&chunk->mesh.vertices, v4);
-    da_append(&chunk->mesh.vertices, v0);
+    da_append(&chunk->mesh.vertices, make_block_vertex(v6, (vec3){  1, 0, 0 }, &color.raw[0]));
+    da_append(&chunk->mesh.vertices, make_block_vertex(v2, (vec3){  1, 0, 0 }, &color.raw[0]));
+    da_append(&chunk->mesh.vertices, make_block_vertex(v1, (vec3){  1, 0, 0 }, &color.raw[0]));
+    da_append(&chunk->mesh.vertices, make_block_vertex(v1, (vec3){  1, 0, 0 }, &color.raw[0]));
+    da_append(&chunk->mesh.vertices, make_block_vertex(v5, (vec3){  1, 0, 0 }, &color.raw[0]));
+    da_append(&chunk->mesh.vertices, make_block_vertex(v6, (vec3){  1, 0, 0 }, &color.raw[0]));
+
     // top face
-    da_append(&chunk->mesh.vertices, v3);
-    da_append(&chunk->mesh.vertices, v2);
-    da_append(&chunk->mesh.vertices, v6);
-    da_append(&chunk->mesh.vertices, v6);
-    da_append(&chunk->mesh.vertices, v7);
-    da_append(&chunk->mesh.vertices, v3);
+    da_append(&chunk->mesh.vertices, make_block_vertex(v0, (vec3){ 0, -1, 0 }, &color.raw[0]));
+    da_append(&chunk->mesh.vertices, make_block_vertex(v1, (vec3){ 0, -1, 0 }, &color.raw[0]));
+    da_append(&chunk->mesh.vertices, make_block_vertex(v5, (vec3){ 0, -1, 0 }, &color.raw[0]));
+    da_append(&chunk->mesh.vertices, make_block_vertex(v5, (vec3){ 0, -1, 0 }, &color.raw[0]));
+    da_append(&chunk->mesh.vertices, make_block_vertex(v4, (vec3){ 0, -1, 0 }, &color.raw[0]));
+    da_append(&chunk->mesh.vertices, make_block_vertex(v0, (vec3){ 0, -1, 0 }, &color.raw[0]));
+
+    // bottom face
+    da_append(&chunk->mesh.vertices, make_block_vertex(v3, (vec3){ 0,  1, 0 }, &color.raw[0]));
+    da_append(&chunk->mesh.vertices, make_block_vertex(v2, (vec3){ 0,  1, 0 }, &color.raw[0]));
+    da_append(&chunk->mesh.vertices, make_block_vertex(v6, (vec3){ 0,  1, 0 }, &color.raw[0]));
+    da_append(&chunk->mesh.vertices, make_block_vertex(v6, (vec3){ 0,  1, 0 }, &color.raw[0]));
+    da_append(&chunk->mesh.vertices, make_block_vertex(v7, (vec3){ 0,  1, 0 }, &color.raw[0]));
+    da_append(&chunk->mesh.vertices, make_block_vertex(v3, (vec3){ 0,  1, 0 }, &color.raw[0]));
 }
 
 void render_grass_block(Chunk *chunk, ivec3s pos)

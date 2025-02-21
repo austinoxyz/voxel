@@ -3,7 +3,6 @@
 #include "common.h"
 #include "window.h"
 #include "camera.h"
-#include "cubeshader.h"
 
 static InputHandler s_input_handler;
 static bool s_input_handler_initialized = false;

@@ -1,7 +1,6 @@
 #include "camera.h"
 #include "window.h"
 #include "shader.h"
-#include "cubeshader.h"
 #include "input.h"
 
 static Camera s_camera;

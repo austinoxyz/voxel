@@ -11,7 +11,7 @@
 
 typedef struct BlockVertex {
     vec3 pos;
-    /* vec3 normal; */
+    vec3 normal;
     vec4 color;
 } BlockVertex;
 
@@ -26,7 +26,6 @@ typedef struct ChunkMesh {
 #define CHUNK_SZ (32)
 
 typedef struct Chunk {
-    size_t id;
     ivec2s pos;
     ChunkMesh mesh;
     bool dirty;

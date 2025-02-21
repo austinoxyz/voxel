@@ -7,9 +7,6 @@
 #include "input.h"
 #include "lightsource.h"
 
-#include "cube_vertices.h"
-#include "cubeshader.h"
-
 const ivec2s s_winsize = (ivec2s){ .x=800, .y=600 };
 const float  s_aspect = (float) s_winsize.x / (float) s_winsize.y;
 const char *s_window_title = "opengl-c-model-rendering";
@@ -39,8 +36,8 @@ void init()
 
     camera_init((vec3){ 0, 0, 3 }, (vec3){ 0, 0, -1 }, 45.0f);
 
-    static const vec3s lightsource_pos = (vec3s){ .x=0, .y=2, .z=-3 };
-    static const vec3s lightsource_color = (vec3s){ .r=0.909f, .g=0.733f, .b=0.145f };
+    static const vec3s lightsource_pos = (vec3s){ .x=-2, .y=5, .z=-3 };
+    static const vec3s lightsource_color = (vec3s){ .r=0.909f, .g=0.909f, .b=0.909f };
     if (0 > lightsource_init(1.0f, lightsource_pos, lightsource_color)) {
         err("Failed to initialize light source.");
         cleanup_and_exit(1);
@@ -57,7 +54,7 @@ void init()
     }
 
     chunk_put_block(&s_chunk, (Block){ BLOCK_STONE }, (ivec3s){ .x=0, .y=0, .z=0 });
-    chunk_put_block(&s_chunk, (Block){ BLOCK_DIRT }, (ivec3s){ .x=0, .y=1, .z=0 });
+    chunk_put_block(&s_chunk, (Block){ BLOCK_DIRT },  (ivec3s){ .x=0, .y=1, .z=0 });
     chunk_put_block(&s_chunk, (Block){ BLOCK_GRASS }, (ivec3s){ .x=0, .y=2, .z=0 });
 
     info("Initialized successfully.");
