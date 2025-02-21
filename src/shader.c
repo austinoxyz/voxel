@@ -37,11 +37,6 @@ void shader_destroy(Shader shader)
     glDeleteProgram(shader);
 }
 
-void shader_use(Shader shader)
-{
-    glUseProgram(shader);
-}
-
 int shader_compile(GLuint *id, GLenum type, const char *srcpath)
 {
     assert(id);
@@ -106,23 +101,30 @@ GLint get_uniform_location(Shader shader, const char *name)
     return location;
 }
 
+void shader_set_uniform_float(Shader shader, const char *name, float value)
+{
+    glUseProgram(shader);
+    glUniform1f(get_uniform_location(shader, name), value);
+    gl_check_error();
+}
+
 void shader_set_uniform_int(Shader shader, const char *name, int value)
 {
-    shader_use(shader);
+    glUseProgram(shader);
     glUniform1i(get_uniform_location(shader, name), value);
     gl_check_error();
 }
 
 void shader_set_uniform_bool(Shader shader, const char *name, bool value)
 {
-    shader_use(shader);
+    glUseProgram(shader);
     shader_set_uniform_int(shader, name, (int) value);
     gl_check_error();
 }
 
 void shader_set_uniform_mat4s(Shader shader, const char *name, mat4s value)
 {
-    shader_use(shader);
+    glUseProgram(shader);
     glUniformMatrix4fv(get_uniform_location(shader, name), 
                        1, 
                        GL_FALSE, 
@@ -132,7 +134,7 @@ void shader_set_uniform_mat4s(Shader shader, const char *name, mat4s value)
 
 void shader_set_uniform_mat4(Shader shader, const char *name, mat4 value)
 {
-    shader_use(shader);
+    glUseProgram(shader);
     glUniformMatrix4fv(get_uniform_location(shader, name),
                        1,
                        GL_FALSE,
@@ -140,9 +142,18 @@ void shader_set_uniform_mat4(Shader shader, const char *name, mat4 value)
     gl_check_error();
 }
 
+void shader_set_uniform_vec3(Shader shader, const char *name, vec3 value)
+{
+    glUseProgram(shader);
+    glUniform3fv(get_uniform_location(shader, name), 
+                 1, 
+                 (const GLfloat *)value);
+    gl_check_error();
+}
+
 void shader_set_uniform_vec3s(Shader shader, const char *name, vec3s value)
 {
-    shader_use(shader);
+    glUseProgram(shader);
     glUniform3fv(get_uniform_location(shader, name), 
                  1, 
                  (const GLfloat *)value.raw);
@@ -151,7 +162,7 @@ void shader_set_uniform_vec3s(Shader shader, const char *name, vec3s value)
 
 void shader_set_uniform_vec4s(Shader shader, const char *name, vec4s value)
 {
-    shader_use(shader);
+    glUseProgram(shader);
     glUniform4fv(get_uniform_location(shader, name), 
                  1, 
                  (const GLfloat *)value.raw);

@@ -36,4 +36,8 @@
     statement;                             \
     XPRAGMA(GCC diagnostic pop);
 
+#ifndef PI
+#  define PI (3.1415926534f)
+#endif
+
 #endif

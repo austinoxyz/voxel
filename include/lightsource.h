@@ -28,10 +28,9 @@ typedef struct LightSource {
     } indices;
 } LightSource;
 
-int lightsource_init(float radius, vec3s pos, vec3s color);
-void lightsource_deinit(void);
-void lightsource_update(float dt);
-void lightsource_render(void);
-LightSource* lightsource_get(void);
+int lightsource_init(LightSource *lightsource, float radius, vec3s pos, vec3s color);
+void lightsource_deinit(LightSource *lightsource);
+void lightsource_update(LightSource *lightsource, float dt);
+void lightsource_render(LightSource *lightsource, float dt);
 
 #endif

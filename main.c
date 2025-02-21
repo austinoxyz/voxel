@@ -1,22 +1,20 @@
 #include <stdio.h>
 
+#include "common.h"
 #include "window.h"
 #include "camera.h"
-#include "common.h"
-#include "chunk.h"
 #include "input.h"
-#include "lightsource.h"
+#include "world.h"
 
 const ivec2s s_winsize = (ivec2s){ .x=800, .y=600 };
 const float  s_aspect = (float) s_winsize.x / (float) s_winsize.y;
 const char *s_window_title = "opengl-voxel";
 
-static Chunk s_chunk;
+static World s_world;
 
 void cleanup()
 {
-    deinit_chunk_renderer();
-    lightsource_deinit();
+    world_deinit(&s_world);
     window_destroy();
     glfw_close();
 }
@@ -36,26 +34,10 @@ void init()
 
     camera_init((vec3){ 0, 0, 3 }, (vec3){ 0, 0, -1 }, 45.0f);
 
-    static const vec3s lightsource_pos = (vec3s){ .x=-2, .y=5, .z=-3 };
-    static const vec3s lightsource_color = (vec3s){ .r=0.959f, .g=0.809f, .b=0.809f };
-    if (0 > lightsource_init(0.5f, lightsource_pos, lightsource_color)) {
-        err("Failed to initialize light source.");
-        cleanup_and_exit(1);
+    if (0 > world_init(&s_world)) {
+        err("Failed to initialize world.");
+        cleanup_and_exit(2);
     }
-
-    if (0 > init_chunk_renderer()) {
-        err("Failed to initialize chunk renderer.");
-        cleanup_and_exit(1);
-    }
-
-    if (0 > chunk_new(&s_chunk, (ivec2s){ .x=0, .y=0 })) {
-        err("Failed to initialize chunk.");
-        cleanup_and_exit(1);
-    }
-
-    chunk_put_block(&s_chunk, (Block){ BLOCK_STONE }, (ivec3s){ .x=0, .y=0, .z=0 });
-    chunk_put_block(&s_chunk, (Block){ BLOCK_DIRT },  (ivec3s){ .x=0, .y=1, .z=0 });
-    chunk_put_block(&s_chunk, (Block){ BLOCK_GRASS }, (ivec3s){ .x=0, .y=2, .z=0 });
 
     info("Initialized successfully.");
 }
@@ -65,17 +47,18 @@ void update(float dt)
     input_handler_poll();
 
     camera_update(dt);
-    chunk_update(&s_chunk, dt);
-    lightsource_update(dt);
+    world_update(&s_world, dt);
 }
 
 void render(float dt)
 {
-    UNUSED(dt);
     glClearColor(0.2, 0.2, 0.2, 0.8);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        lightsource_render();
-        chunk_render(&s_chunk);
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    world_render(&s_world, dt);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
     glfwSwapBuffers(window_get_handle());
     glfwPollEvents();
 }

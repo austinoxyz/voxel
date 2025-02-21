@@ -71,6 +71,8 @@ int window_create(ivec2s size, const char *title)
     glViewport(0, 0, size.x, size.y);
     glfwSetFramebufferSizeCallback(handle, gl_framebuffer_size_callback);
 
+    glEnable(GL_CULL_FACE);
+
     glEnable(GL_MULTISAMPLE);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
