@@ -22,7 +22,7 @@ typedef struct LightSource {
         size_t capacity;
     } vertices;
     struct {
-        size_t *items;
+        GLuint *items;
         size_t count;
         size_t capacity;
     } indices;

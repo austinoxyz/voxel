@@ -38,7 +38,7 @@ void init()
 
     static const vec3s lightsource_pos = (vec3s){ .x=-2, .y=5, .z=-3 };
     static const vec3s lightsource_color = (vec3s){ .r=0.909f, .g=0.909f, .b=0.909f };
-    if (0 > lightsource_init(1.0f, lightsource_pos, lightsource_color)) {
+    if (0 > lightsource_init(0.5f, lightsource_pos, lightsource_color)) {
         err("Failed to initialize light source.");
         cleanup_and_exit(1);
     }
