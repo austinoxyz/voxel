@@ -75,13 +75,6 @@ void input_handler_poll(void)
     }
 }
 
-bool key_is_down(int keycode)
-{
-    assert(s_input_handler_initialized);
-    ButtonState state = s_input_handler.key_state[keycode_to_keyidx(keycode)];
-    return state == BUTTONSTATE_JUSTPRESSED || state == BUTTONSTATE_DOWN;
-}
-
 bool key_pressed(int keycode)
 {
     assert(s_input_handler_initialized);
@@ -89,18 +82,25 @@ bool key_pressed(int keycode)
     return state == BUTTONSTATE_JUSTPRESSED;
 }
 
+bool key_released(int keycode)
+{
+    assert(s_input_handler_initialized);
+    ButtonState state = s_input_handler.key_state[keycode_to_keyidx(keycode)];
+    return state == BUTTONSTATE_JUSTRELEASED;
+}
+
+bool key_is_down(int keycode)
+{
+    assert(s_input_handler_initialized);
+    ButtonState state = s_input_handler.key_state[keycode_to_keyidx(keycode)];
+    return state == BUTTONSTATE_JUSTPRESSED || state == BUTTONSTATE_DOWN;
+}
+
 bool key_is_up(int keycode)
 {
     assert(s_input_handler_initialized);
     ButtonState state = s_input_handler.key_state[keycode_to_keyidx(keycode)];
     return state == BUTTONSTATE_JUSTRELEASED || state == BUTTONSTATE_UP;
-}
-
-bool key_is_released(int keycode)
-{
-    assert(s_input_handler_initialized);
-    ButtonState state = s_input_handler.key_state[keycode_to_keyidx(keycode)];
-    return state == BUTTONSTATE_JUSTRELEASED;
 }
 
 bool keymodifier_is_down(KeyModifier modifier)

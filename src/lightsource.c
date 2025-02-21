@@ -1,15 +1,17 @@
-#include "lightsource.h"
 #include "camera.h"
+#include "world.h"
+#include "player.h"
 
 void lightsource_compute_sphere(LightSource *lightsource, vec3s color);
 
-int lightsource_init(LightSource *lightsource, float radius, vec3s pos, vec3s color)
+int lightsource_init(LightSource *lightsource, float radius, vec3s pos, vec3s color, World *world)
 {
     assert(lightsource);
 
     lightsource->radius = radius;
     lightsource->pos    = pos;
     lightsource->color  = color;
+    lightsource->world  = world;
 
     if (0 > shader_create(&lightsource->shader, "src/glsl/light_vs.glsl", "src/glsl/light_fs.glsl")) {
         err("Failed to create light source shader.");
@@ -81,7 +83,12 @@ void lightsource_update(LightSource *lightsource, float dt)
 {
     assert(lightsource);
 
-    camera_set_shader_projection_and_view(lightsource->shader);
+    shader_set_uniform_mat4(lightsource->shader, 
+                            "projection",
+                            lightsource->world->player->camera.projection);
+    shader_set_uniform_mat4(lightsource->shader, 
+                            "view",
+                            lightsource->world->player->camera.view);
 }
 
 void lightsource_render(LightSource *lightsource, float dt)

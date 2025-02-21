@@ -1,6 +1,8 @@
 #include "chunk.h"
 #include "shader.h"
 #include "camera.h"
+#include "world.h"
+#include "player.h"
 #include "lightsource.h"
 
 void chunk_render_block(Chunk *chunk, ivec3s pos, Block block);
@@ -74,8 +76,16 @@ void chunk_delete(Chunk *chunk)
 void chunk_update(Chunk *chunk, float dt)
 {
     assert(chunk);
-    camera_set_shader_projection_and_view(chunk->shader);
-    shader_set_uniform_vec3(chunk->shader, "viewPos", camera_get()->pos);
+
+    shader_set_uniform_vec3(chunk->shader, 
+                            "viewPos", 
+                            chunk->world->player->camera.pos);
+    shader_set_uniform_mat4(chunk->shader, 
+                            "projection",
+                            chunk->world->player->camera.projection);
+    shader_set_uniform_mat4(chunk->shader, 
+                            "view",
+                            chunk->world->player->camera.view);
 
     if (chunk->dirty) {
         chunk_rebuild_mesh(chunk);

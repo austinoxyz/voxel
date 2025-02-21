@@ -1,13 +1,15 @@
 #include "world.h"
 
-int world_init(World *world)
+int world_init(World *world, Player *player)
 {
     assert(world);
+
+    world->player = player;
 
     const float radius = 0.5f;
     const vec3s pos = (vec3s){ .x=2.5, .y=2.5, .z=-3 };
     const vec3s color = (vec3s){ .r=1, .g=1, .b=1 };
-    if (0 > lightsource_init(&world->lightsource, radius, pos, color)) {
+    if (0 > lightsource_init(&world->lightsource, radius, pos, color, world)) {
         err("Failed to initialize light source.");
         return -1;
     }

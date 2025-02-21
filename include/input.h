@@ -34,10 +34,10 @@ void input_handler_init(void);
 void input_handler_deinit(void);
 void input_handler_poll();
 
-bool key_is_down(int keycode);
 bool key_pressed(int keycode);
+bool key_released(int keycode);
+bool key_is_down(int keycode);
 bool key_is_up(int keycode);
-bool key_is_released(int keycode);
 
 bool keymodifier_is_down(KeyModifier modifier);
 

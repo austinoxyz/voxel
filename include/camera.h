@@ -10,11 +10,8 @@ typedef struct Camera {
     mat4 view, projection;
 } Camera;
 
-void camera_init(vec3 pos, vec3 dir, float fov);
-void camera_update(float dt);
-Camera* camera_get(void);
-
-void camera_compute_view_and_projection(void);
-void camera_set_shader_projection_and_view(Shader);
+void camera_init(Camera *camera, vec3 pos, vec3 dir, float fov);
+void camera_update(Camera *camera, float dt);
+void camera_compute_view_and_projection(Camera *camera);
 
 #endif
