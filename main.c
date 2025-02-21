@@ -9,7 +9,7 @@
 
 const ivec2s s_winsize = (ivec2s){ .x=800, .y=600 };
 const float  s_aspect = (float) s_winsize.x / (float) s_winsize.y;
-const char *s_window_title = "opengl-c-model-rendering";
+const char *s_window_title = "opengl-voxel";
 
 static Chunk s_chunk;
 
@@ -37,7 +37,7 @@ void init()
     camera_init((vec3){ 0, 0, 3 }, (vec3){ 0, 0, -1 }, 45.0f);
 
     static const vec3s lightsource_pos = (vec3s){ .x=-2, .y=5, .z=-3 };
-    static const vec3s lightsource_color = (vec3s){ .r=0.909f, .g=0.909f, .b=0.909f };
+    static const vec3s lightsource_color = (vec3s){ .r=0.959f, .g=0.809f, .b=0.809f };
     if (0 > lightsource_init(0.5f, lightsource_pos, lightsource_color)) {
         err("Failed to initialize light source.");
         cleanup_and_exit(1);

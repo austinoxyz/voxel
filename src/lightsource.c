@@ -118,8 +118,12 @@ void lightsource_render(void)
 void lightsource_compute_sphere(vec3s color) {
     static const float PI = 3.1415927f;
 
+    // increase to 36,18 for higher resolution sphere
+    /* static const int sector_count = 16; */
+    /* static const int stack_count = 8; */
     static const int sector_count = 36;
     static const int stack_count = 18;
+
     float x, y, z, xy;
     float nx, ny, nz, length_inv = 1.0f / s_lightsource.radius;
     float sector_step = 2 * PI / sector_count;
