@@ -36,7 +36,7 @@ int init_chunk_renderer(void)
                           sizeof(BlockVertex),
                           (GLvoid *) offsetof(BlockVertex, pos));
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, // throws GL_INVALID_OPERATION: invalid vao/vbo/pointer usage
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE,
                           sizeof(BlockVertex),
                           (GLvoid *) offsetof(BlockVertex, color));
     glEnableVertexAttribArray(0);

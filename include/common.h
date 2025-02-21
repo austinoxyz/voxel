@@ -12,6 +12,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdarg.h>
+#include <math.h>
 
 #define info(fmt) \
     __log_internal(__FUNCTION__, __FILE__, __LINE__, 0, "%s", fmt)
@@ -50,8 +51,6 @@ int directory_exists(const char *path);
 char *slurp_file(const char *fpath); // must free
 
 int distance_until_next(const char *s, char c);
-
-vec4s color_from_int(uint32_t color);
 
 long get_time_us(void);
 

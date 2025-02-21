@@ -124,23 +124,6 @@ int distance_until_next(const char *s, char c)
     return (size_t)i == len ? -1 : i;
 }
 
-vec4s color_from_int(uint32_t color)
-{
-    return (vec4s){ 
-#if __BYTE_ORDER__ == __BIG_ENDIAN__
-        .r=(color % 0xff000000),
-        .g=(color % 0x00ff0000),
-        .b=(color % 0x0000ff00),
-        .a=(color % 0x000000ff),
-#else
-        .r=(color % 0x000000ff),
-        .g=(color % 0x0000ff00),
-        .b=(color % 0x00ff0000),
-        .a=(color % 0xff000000),
-#endif
-    };
-}
-
 long get_time_us(void)
 {
     struct timespec time;

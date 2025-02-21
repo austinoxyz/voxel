@@ -5,6 +5,7 @@
 #include "common.h"
 #include "chunk.h"
 #include "input.h"
+#include "lightsource.h"
 
 #include "cube_vertices.h"
 #include "cubeshader.h"
@@ -18,6 +19,7 @@ static Chunk s_chunk;
 void cleanup()
 {
     deinit_chunk_renderer();
+    lightsource_deinit();
     window_destroy();
     glfw_close();
 }
@@ -36,6 +38,12 @@ void init()
     input_handler_init();
 
     camera_init((vec3){ 0, 0, 3 }, (vec3){ 0, 0, -1 }, 45.0f);
+
+    static const vec4s lightsource_color = (vec4s){ .r=0.909f, .g=0.733f, .b=0.145f, .a=1.0f };
+    if (0 > lightsource_init(1.0f, (vec3s){ .x=0, .y=2, .z=-3 }, lightsource_color)) {
+        err("Failed to initialize light source.");
+        cleanup_and_exit(1);
+    }
 
     if (0 > init_chunk_renderer()) {
         err("Failed to initialize chunk renderer.");
@@ -60,6 +68,7 @@ void update(float dt)
 
     camera_update(dt);
     chunk_update(&s_chunk, dt);
+    lightsource_update(dt);
 }
 
 void render(float dt)
@@ -67,6 +76,7 @@ void render(float dt)
     UNUSED(dt);
     glClearColor(0.2, 0.2, 0.2, 0.8);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        lightsource_render();
         chunk_render(&s_chunk);
     glfwSwapBuffers(window_get_handle());
     glfwPollEvents();

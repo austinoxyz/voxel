@@ -11,6 +11,7 @@
 
 typedef struct BlockVertex {
     vec3 pos;
+    /* vec3 normal; */
     vec4 color;
 } BlockVertex;
 

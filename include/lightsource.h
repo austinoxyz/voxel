@@ -1,0 +1,36 @@
+#ifndef LIGHTSOURCE_H
+#define LIGHTSOURCE_H
+
+#include "glfw.h"
+#include "common.h"
+
+typedef struct LightSourceVertex {
+    vec3 pos;
+    vec3 normal;
+    vec4 color;
+} LightSourceVertex;
+
+typedef struct LightSource {
+    GLuint vao, vbo, ebo;
+    Shader shader;
+    vec3s pos;
+    vec4s color;
+    float radius;
+    struct {
+        LightSourceVertex *items;
+        size_t count;
+        size_t capacity;
+    } vertices;
+    struct {
+        size_t *items;
+        size_t count;
+        size_t capacity;
+    } indices;
+} LightSource;
+
+int lightsource_init(float radius, vec3s pos, vec4s color);
+void lightsource_deinit(void);
+void lightsource_update(float dt);
+void lightsource_render(void);
+
+#endif
