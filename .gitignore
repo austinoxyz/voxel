@@ -4,6 +4,8 @@ test.c
 build/
 lib/
 
+tags
+
 *.o
 **/*.o
 **/**/*.o
