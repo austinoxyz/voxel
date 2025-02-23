@@ -49,14 +49,14 @@ void input_handler_poll(void)
         const int oldstate = s_input_handler.key_state[i];
         if (newstate == GLFW_PRESS) {
             if (oldstate == BUTTONSTATE_UP || oldstate == BUTTONSTATE_JUSTRELEASED) {
-                vinfo("key '%c' just pressed", keyidx_to_char(i));
+                /* vinfo("key '%c' just pressed", keyidx_to_char(i)); */
                 s_input_handler.key_state[i] = BUTTONSTATE_JUSTPRESSED;
             } else {
                 s_input_handler.key_state[i] = BUTTONSTATE_DOWN;
             }
         } else if (newstate == GLFW_RELEASE) {
             if (oldstate == BUTTONSTATE_JUSTPRESSED || oldstate == BUTTONSTATE_DOWN) {
-                vinfo("key '%c' just released", keyidx_to_char(i));
+                /* vinfo("key '%c' just released", keyidx_to_char(i)); */
                 s_input_handler.key_state[i] = BUTTONSTATE_JUSTRELEASED;
             } else {
                 s_input_handler.key_state[i] = BUTTONSTATE_UP;

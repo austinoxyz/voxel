@@ -1,6 +1,7 @@
 #include "chunkmanager.h"
 
 #include "world.h"
+#include "player.h"
 
 int chunkmanager_init(ChunkManager *manager, World *world)
 {
@@ -38,10 +39,6 @@ int chunkmanager_init(ChunkManager *manager, World *world)
     /*                       (GLvoid *) 0); */
     glEnableVertexAttribArray(0);
 
-    mat4 model;
-    glm_mat4_identity(model);
-    shader_set_uniform_mat4(manager->shader, "model", model);
-
     shader_set_uniform_vec3(manager->shader, "light.color", &manager->world->lightsource.color.raw[0]);
     shader_set_uniform_vec3(manager->shader, "light.pos",   &manager->world->lightsource.pos.raw[0]);
     shader_set_uniform_vec3(manager->shader, "light.ambient",  (vec3){ 0.2, 0.2, 0.2 });
@@ -52,22 +49,6 @@ int chunkmanager_init(ChunkManager *manager, World *world)
     shader_set_uniform_vec3(manager->shader,  "material.diffuse",  (vec3){ 0.5, 0.5, 0.5 });
     shader_set_uniform_vec3(manager->shader,  "material.specular", (vec3){ 0.5, 0.5, 0.5  });
     shader_set_uniform_float(manager->shader, "material.shininess", 32.0f);
-
-    // tmp code
-    //------------------------------------------
-    if (0 > chunk_new(&manager->chunk, (ivec2s){ .x=0, .y=0 }, world, manager->shader, manager->vao, manager->vbo)) {
-        err("Failed to initialize chunk.");
-        return -2;
-    }
-    const int N = BLOCK_TYPE_COUNT;
-    for (int i = 0; i < 5; ++i) {
-        for (BlockType type = BLOCK_DIRT; (int) type < N; ++type) {
-            chunk_put_block(&manager->chunk, 
-                            (Block){ 1 + ((type + i) % (N-1)) }, 
-                            (ivec3s){ .x=i, .y=(type-1), .z=0 });
-        }
-    }
-    //------------------------------------------
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
@@ -80,7 +61,9 @@ void chunkmanager_deinit(ChunkManager *manager)
 {
     assert(manager);
 
-    chunk_delete(&manager->chunk);
+    for (int i = 0; i < (int)manager->chunks.count; ++i) {
+        chunk_delete(&manager->chunks.items[i]);
+    }
 
     glDeleteBuffers(1, &manager->vbo);
     glDeleteVertexArrays(1, &manager->vao);
@@ -91,12 +74,46 @@ void chunkmanager_update(ChunkManager *manager, float dt)
 {
     assert(manager);
 
-    chunk_update(&manager->chunk, dt);
+    for (int i = 0; i < (int)manager->chunks.count; ++i) {
+        chunk_update(&manager->chunks.items[i], dt);
+    }
 }
 
 void chunkmanager_render(ChunkManager *manager, float dt)
 {
     assert(manager);
 
-    chunk_render(&manager->chunk, dt);
+    shader_set_uniform_mat4(manager->shader, 
+                            "projection",
+                            manager->world->player->camera.projection);
+    shader_set_uniform_mat4(manager->shader, 
+                            "view",
+                            manager->world->player->camera.view);
+    shader_set_uniform_vec3(manager->shader, 
+                            "viewPos", 
+                            manager->world->player->camera.pos);
+
+    for (int i = 0; i < (int)manager->chunks.count; ++i) {
+        chunk_render(&manager->chunks.items[i], dt);
+    }
+}
+
+Chunk* chunkmanager_get_chunk(ChunkManager *manager, ChunkId id)
+{
+    assert(manager);
+
+    for (int i = 0; i < (int)manager->chunks.count; ++i) {
+        if (id.x == manager->chunks.items[i].id.x 
+            && id.y == manager->chunks.items[i].id.y
+            && id.z == manager->chunks.items[i].id.z) 
+        {
+            return &manager->chunks.items[i];
+        }
+    }
+
+    verr("tried to get chunk that doesn't exist: (%d, %d, %d)", id.x, id.y, id.z);
+    __builtin_trap();
+    cleanup_and_exit(1);
+    __builtin_unreachable();
+    return NULL;
 }

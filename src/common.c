@@ -151,3 +151,4 @@ float clamp(float x, float low, float high)
         return x;
     }
 }
+

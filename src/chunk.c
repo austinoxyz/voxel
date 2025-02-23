@@ -16,7 +16,7 @@ static const vec4s s_block_color[BLOCK_TYPE_COUNT] = {
     (vec4s){ .r=0.929, .g=0.917, .b=0.882, .a=1.0f }
 };
 
-int chunk_new(Chunk *chunk, ivec2s pos, World *world, Shader shader, GLuint vao, GLuint vbo)
+int chunk_new(Chunk *chunk, ChunkId id, World *world, Shader shader, GLuint vao, GLuint vbo)
 {
     assert(chunk);
 
@@ -46,7 +46,7 @@ int chunk_new(Chunk *chunk, ivec2s pos, World *world, Shader shader, GLuint vao,
     }
 
     chunk->blocks = blocks;
-    chunk->pos = pos;
+    chunk->id = id;
     chunk->dirty = false;
     chunk->world = world;
     chunk->shader = shader;
@@ -77,15 +77,12 @@ void chunk_update(Chunk *chunk, float dt)
 {
     assert(chunk);
 
-    shader_set_uniform_vec3(chunk->shader, 
-                            "viewPos", 
-                            chunk->world->player->camera.pos);
-    shader_set_uniform_mat4(chunk->shader, 
-                            "projection",
-                            chunk->world->player->camera.projection);
-    shader_set_uniform_mat4(chunk->shader, 
-                            "view",
-                            chunk->world->player->camera.view);
+    vec3 chunk_worldpos = {
+        chunk->id.x*CHUNK_SIDELEN, chunk->id.y*CHUNK_SIDELEN, chunk->id.z*CHUNK_SIDELEN
+    };
+
+    glm_mat4_identity(chunk->model);
+    glm_translate(chunk->model, chunk_worldpos);
 
     if (chunk->dirty) {
         chunk_rebuild_mesh(chunk);
@@ -106,6 +103,7 @@ void chunk_rebuild_mesh(Chunk *chunk)
             }
         }
     }
+
 }
 
 BlockVertex make_block_vertex(vec3 pos, vec3 normal, vec4 color, BlockType type)
@@ -136,7 +134,6 @@ void chunk_render_block(Chunk *chunk, ivec3s pos, Block block)
     vec3 v7 = { pos.x*N,     (pos.y+1)*N, (pos.z+1)*N };
 
     vec4s color = s_block_color[block.type];
-
 
     // back face (-z is far plane)
     if (pos.z == 0 || chunk->blocks[pos.x][pos.y][pos.z-1].type == BLOCK_AIR) {
@@ -203,7 +200,13 @@ void chunk_render(Chunk *chunk, float dt)
 {
     assert(chunk);
     UNUSED(dt);
+
     glUseProgram(chunk->shader);
+
+    shader_set_uniform_mat4(chunk->shader,
+                            "model",
+                            chunk->model);
+
     glBindVertexArray(chunk->vao);
     glBindBuffer(GL_ARRAY_BUFFER, chunk->vbo);
     glBufferData(GL_ARRAY_BUFFER, 
@@ -211,6 +214,7 @@ void chunk_render(Chunk *chunk, float dt)
                  chunk->vertices.items,
                  GL_STATIC_DRAW);
     glDrawArrays(GL_TRIANGLES, 0, chunk->vertices.count);
+
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
     glUseProgram(0);

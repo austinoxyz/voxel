@@ -36,7 +36,7 @@ void gl_framebuffer_size_callback(GLFWwindow *window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
-int window_create(ivec2s size, const char *title)
+int window_create(ivec2s size, const char *title, int fps)
 {
     assert(glfw_is_initialized());
     assert(!s_window_is_initialized);
@@ -103,6 +103,9 @@ int window_create(ivec2s size, const char *title)
     s_window.size   = size;
     s_window.title  = title;
     s_window.aspect = (float) size.x / (float) size.y;
+
+    s_window.target_fps    = fps;
+    s_window.ms_per_update = 1000.0f / fps;
 
     s_window_is_initialized = true;
 

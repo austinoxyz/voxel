@@ -3,8 +3,6 @@
 
 #include "common.h"
 
-#define BLOCK_SIDELEN (1.0f)
-
 typedef enum BlockType {
     BLOCK_AIR = 0,
     BLOCK_DIRT,

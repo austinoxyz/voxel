@@ -9,7 +9,7 @@
 
 #define DEBUG (0)
 
-const ivec2s s_winsize = (ivec2s){ .x=800, .y=600 };
+const ivec2s s_winsize = (ivec2s){ .x=1080, .y=720 };
 const float  s_aspect = (float) s_winsize.x / (float) s_winsize.y;
 const char *s_window_title = "opengl-voxel";
 
@@ -29,24 +29,30 @@ void init()
 
     glfw_init();
 
-    if (0 > window_create(s_winsize, s_window_title)) {
+    if (0 > window_create(s_winsize, s_window_title, 60)) {
         err("Failed to create window.");
         cleanup_and_exit(1);
     }
 
     input_handler_init();
 
-    if (0 > player_init(&s_player, &s_world)) {
-        err("Failed to initialize player.");
-        cleanup_and_exit(3);
-    }
-
     if (0 > world_init(&s_world, &s_player)) {
         err("Failed to initialize world.");
         cleanup_and_exit(2);
     }
 
+    if (0 > player_init(&s_player, &s_world)) {
+        err("Failed to initialize player.");
+        cleanup_and_exit(3);
+    }
+
     info("Initialized successfully.");
+}
+
+void handle_input(float dt)
+{
+    input_handler_poll();
+    player_handle_input(&s_player, dt);
 }
 
 void update(float dt)
@@ -66,7 +72,10 @@ void render(float dt)
 #if defined(DEBUG) && DEBUG == 1
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 #endif
+
+    player_render(&s_player, dt);
     world_render(&s_world, dt);
+
 #if defined(DEBUG) && DEBUG == 1
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 #endif
@@ -83,8 +92,33 @@ int main(void)
     end_time = start_time = get_time_us();
     acc_time = dt = 0;
 
+    /* long prev_time = get_time_us(); */
+    /* long curr_time, dt; */
+    /* long acc_time = 0; */
+    /* float lag; */
+
     while (!glfwWindowShouldClose(window_get_handle())) 
     {
+        /* curr_time = get_time_us(); */
+        /* dt = curr_time - prev_time; */
+        /* prev_time = curr_time; */
+        /* lag += dt/1000; */
+        /* acc_time += dt; */
+
+        /* if (acc_time >= 1000000) { */
+        /*     vinfo("FPS: %zu", (size_t) floor(1000000.0f/dt)); */
+        /*     acc_time = 0; */
+        /* } */
+
+        /* handle_input(dt); */
+
+        /* while (lag >= window_get()->ms_per_update) { */
+        /*     update(dt); */
+        /*     lag -= window_get()->ms_per_update; */
+        /* } */
+
+        /* render(dt); */
+
         update(dt);
         render(dt);
 
