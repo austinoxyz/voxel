@@ -128,7 +128,7 @@ void shader_set_uniform_mat4s(Shader shader, const char *name, mat4s value)
     glUniformMatrix4fv(get_uniform_location(shader, name), 
                        1, 
                        GL_FALSE, 
-                       (const GLfloat *)value.raw);
+                       (const GLfloat *) value.raw);
     gl_check_error();
 }
 

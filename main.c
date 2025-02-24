@@ -6,8 +6,7 @@
 #include "input.h"
 #include "world.h"
 #include "player.h"
-
-#define DEBUG (0)
+#include "drawtext.h"
 
 const ivec2s s_winsize = (ivec2s){ .x=1080, .y=720 };
 const float  s_aspect = (float) s_winsize.x / (float) s_winsize.y;
@@ -16,9 +15,16 @@ const char *s_window_title = "opengl-voxel";
 static World  s_world;
 static Player s_player;
 
+static TextRenderer s_textrenderer;
+
+static const vec4s s_color_white = (vec4s){ .r=1.0f, .g=1.0f, .b=1.0f, .a=1.0f };
+
+void draw_debug_info();
+
 void cleanup()
 {
     world_deinit(&s_world);
+    player_deinit(&s_player);
     window_destroy();
     glfw_close();
 }
@@ -46,6 +52,11 @@ void init()
         cleanup_and_exit(3);
     }
 
+    if (0 > textrenderer_init(&s_textrenderer, "font/Iosevka.ttf")) {
+        err("Failed to initialize text renderer.");
+        cleanup_and_exit(4);
+    }
+
     info("Initialized successfully.");
 }
 
@@ -57,9 +68,6 @@ void handle_input(float dt)
 
 void update(float dt)
 {
-    input_handler_poll();
-    player_handle_input(&s_player, dt);
-
     player_update(&s_player, dt);
     world_update(&s_world, dt);
 }
@@ -69,16 +77,10 @@ void render(float dt)
     glClearColor(0.2, 0.2, 0.2, 0.8);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-#if defined(DEBUG) && DEBUG == 1
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-#endif
-
     player_render(&s_player, dt);
     world_render(&s_world, dt);
 
-#if defined(DEBUG) && DEBUG == 1
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-#endif
+    draw_debug_info();
 
     glfwSwapBuffers(window_get_handle());
     glfwPollEvents();
@@ -92,33 +94,9 @@ int main(void)
     end_time = start_time = get_time_us();
     acc_time = dt = 0;
 
-    /* long prev_time = get_time_us(); */
-    /* long curr_time, dt; */
-    /* long acc_time = 0; */
-    /* float lag; */
-
     while (!glfwWindowShouldClose(window_get_handle())) 
     {
-        /* curr_time = get_time_us(); */
-        /* dt = curr_time - prev_time; */
-        /* prev_time = curr_time; */
-        /* lag += dt/1000; */
-        /* acc_time += dt; */
-
-        /* if (acc_time >= 1000000) { */
-        /*     vinfo("FPS: %zu", (size_t) floor(1000000.0f/dt)); */
-        /*     acc_time = 0; */
-        /* } */
-
-        /* handle_input(dt); */
-
-        /* while (lag >= window_get()->ms_per_update) { */
-        /*     update(dt); */
-        /*     lag -= window_get()->ms_per_update; */
-        /* } */
-
-        /* render(dt); */
-
+        handle_input(dt);
         update(dt);
         render(dt);
 
@@ -135,3 +113,19 @@ int main(void)
     info("Exiting.");
     cleanup_and_exit(0);
 }
+
+void draw_debug_info(void)
+{
+    static const size_t debug_text_buff_sz = 128;
+    char player_pos_text[debug_text_buff_sz];
+    snprintf(player_pos_text, debug_text_buff_sz,
+             "player pos: (%0.3f,%0.3f,%0.3f)", 
+             s_player.pos[0], s_player.pos[1], s_player.pos[2]);
+
+    draw_text(&s_textrenderer, player_pos_text, strlen(player_pos_text),
+              (vec2s){ .x=100, .y=s_winsize.y-100 }, TEXT_ALIGN_LEFT, 
+              32, 0, s_color_white);
+
+    textrenderer_flush(&s_textrenderer);
+}
+

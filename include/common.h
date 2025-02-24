@@ -48,6 +48,8 @@ int file_exists(const char *path);
 
 int directory_exists(const char *path);
 
+int seek_for_char(const char *s, int start, char c);
+
 char *slurp_file(const char *fpath); // must free
 
 int distance_until_next(const char *s, char c);

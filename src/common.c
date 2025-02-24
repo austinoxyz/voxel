@@ -79,6 +79,14 @@ char *get_filename_base(const char *s)
     return ret;
 }
 
+int seek_for_char(const char *s, int start, char c)
+{
+    size_t len = strlen(s);
+    int i = start;
+    while ((size_t)i < len && s[i] != c) ++i;
+    return (size_t)i == len ? -1 : i;
+}
+
 char *slurp_file(const char *fpath)
 {
     FILE *file = NULL;
