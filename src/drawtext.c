@@ -68,7 +68,7 @@ int textrenderer_init(TextRenderer *tr, const char *fontpath)
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 
                           sizeof(TextVertex), 
                           (GLvoid *) offsetof(TextVertex, uv));
-    glEnableVertexAttribArray(0);
+    /* glEnableVertexAttribArray(0); */
 
     gl_check_error();
 
@@ -357,7 +357,7 @@ void textrenderer_flush(TextRenderer *tr)
                  tr->indices.items,
                  GL_STATIC_DRAW);
 
-    glDrawElements(GL_TRIANGLES, sizeof(GLuint) * tr->indices.count, GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, tr->indices.count, GL_UNSIGNED_INT, 0);
     
     gl_check_error();
 
