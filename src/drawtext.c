@@ -3,6 +3,9 @@
 #include "window.h"
 #include "shader.h"
 
+/* #define STB_IMAGE_WRITE_IMPLEMENTATION */
+/* #include "stb/stb_image_write.h" */
+
 int font_init_glyph_atlas(Font *font);
 
 void draw_character(TextRenderer *tr, char c, vec2s *cursor, size_t fontsize, vec4s color);
@@ -74,7 +77,7 @@ int textrenderer_init(TextRenderer *tr, const char *fontpath)
 
     mat4 ortho_projection;
     glm_ortho(0, window_get()->size.x, 0, window_get()->size.y, 0.1, 100.0, ortho_projection);
-    shader_set_uniform_mat4(tr->shader, "projection", ortho_projection);
+    /* shader_set_uniform_mat4(tr->shader, "projection", ortho_projection); */
 
     /* glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); */
     /* glBindBuffer(GL_ARRAY_BUFFER, 0); */
@@ -201,19 +204,19 @@ void draw_character(TextRenderer *tr, char c, vec2s *cursor, size_t fontsize, ve
     const vec2s uv4 = (vec2s) { .x=(metrics.texture_x + uvwidth), .y=0 };
 
     const TextVertex v1 = (TextVertex){ p1, color, uv1 };
-    const TextVertex v2 = (TextVertex){ p1, color, uv2 };
-    const TextVertex v3 = (TextVertex){ p1, color, uv3 };
-    const TextVertex v4 = (TextVertex){ p1, color, uv4 };
+    const TextVertex v2 = (TextVertex){ p2, color, uv2 };
+    const TextVertex v3 = (TextVertex){ p3, color, uv3 };
+    const TextVertex v4 = (TextVertex){ p4, color, uv4 };
 
-    vinfo("rendering char='%c':", c);
-    vinfo("v1: pos=(%0.2f,%0.2f), uv=(%0.2f,%0.2f), color=(%0.1f,%0.1f,%0.1f,%0.1f)",
-          p1.x, p1.y, uv1.x, uv1.y, color.r, color.g, color.b, color.a);
-    vinfo("v2: pos=(%0.2f,%0.2f), uv=(%0.2f,%0.2f), color=(%0.1f,%0.1f,%0.1f,%0.1f)",
-          p2.x, p2.y, uv2.x, uv2.y, color.r, color.g, color.b, color.a);
-    vinfo("v3: pos=(%0.2f,%0.2f), uv=(%0.2f,%0.2f), color=(%0.1f,%0.1f,%0.1f,%0.1f)",
-          p3.x, p3.y, uv3.x, uv3.y, color.r, color.g, color.b, color.a);
-    vinfo("v4: pos=(%0.2f,%0.2f), uv=(%0.2f,%0.2f), color=(%0.1f,%0.1f,%0.1f,%0.1f)",
-          p4.x, p4.y, uv4.x, uv4.y, color.r, color.g, color.b, color.a);
+    /* vinfo("rendering char='%c':", c); */
+    /* vinfo("v1: pos=(%0.2f,%0.2f), uv=(%0.2f,%0.2f), color=(%0.1f,%0.1f,%0.1f,%0.1f)", */
+    /*       p1.x, p1.y, uv1.x, uv1.y, color.r, color.g, color.b, color.a); */
+    /* vinfo("v2: pos=(%0.2f,%0.2f), uv=(%0.2f,%0.2f), color=(%0.1f,%0.1f,%0.1f,%0.1f)", */
+    /*       p2.x, p2.y, uv2.x, uv2.y, color.r, color.g, color.b, color.a); */
+    /* vinfo("v3: pos=(%0.2f,%0.2f), uv=(%0.2f,%0.2f), color=(%0.1f,%0.1f,%0.1f,%0.1f)", */
+    /*       p3.x, p3.y, uv3.x, uv3.y, color.r, color.g, color.b, color.a); */
+    /* vinfo("v4: pos=(%0.2f,%0.2f), uv=(%0.2f,%0.2f), color=(%0.1f,%0.1f,%0.1f,%0.1f)", */
+    /*       p4.x, p4.y, uv4.x, uv4.y, color.r, color.g, color.b, color.a); */
 
     da_append(&tr->vertices, v1);
     da_append(&tr->vertices, v2);
@@ -222,11 +225,11 @@ void draw_character(TextRenderer *tr, char c, vec2s *cursor, size_t fontsize, ve
 
     const GLuint start = tr->vertices.count - 4;
     da_append(&tr->indices, (GLuint) 0 + start);
-    da_append(&tr->indices, (GLuint) 2 + start);
     da_append(&tr->indices, (GLuint) 1 + start);
     da_append(&tr->indices, (GLuint) 2 + start);
-    da_append(&tr->indices, (GLuint) 0 + start);
+    da_append(&tr->indices, (GLuint) 2 + start);
     da_append(&tr->indices, (GLuint) 3 + start);
+    da_append(&tr->indices, (GLuint) 0 + start);
 
     cursor->x += metrics.advance_x * scale;
 }
@@ -357,8 +360,17 @@ void textrenderer_flush(TextRenderer *tr)
                  tr->indices.items,
                  GL_STATIC_DRAW);
 
+    GLuint query;
+    glGenQueries(1, &query);
+    glBeginQuery(GL_PRIMITIVES_GENERATED, query);
+
     glDrawElements(GL_TRIANGLES, tr->indices.count, GL_UNSIGNED_INT, 0);
     
+    GLint numPrimitives = 0;
+    glEndQuery(GL_PRIMITIVES_GENERATED);
+    glGetQueryObjectiv(query, GL_QUERY_RESULT, &numPrimitives);
+    vinfo("Primitives drawn: %d", numPrimitives);
+
     gl_check_error();
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -370,4 +382,62 @@ void textrenderer_flush(TextRenderer *tr)
     tr->vertices.count = 0;
     tr->indices.count = 0;
 }
+
+/* void render_glyph_atlas(TextRenderer *tr) */
+/* { */
+/*     glUseProgram(tr->shader); */
+
+/*     glActiveTexture(GL_TEXTURE0); */
+/*     glBindTexture(GL_TEXTURE_2D, tr->font.atlas.texture_id); */
+
+/*     glBindVertexArray(tr->vao); */
+
+/*     glBindBuffer(GL_ARRAY_BUFFER, tr->vbo); */
+/*     glBufferData(GL_ARRAY_BUFFER, */
+/*                  tr->vertices.count * sizeof(TextVertex), */
+/*                  tr->vertices.items, */
+/*                  GL_STATIC_DRAW); */
+
+/*     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, tr->ebo); */
+/*     glBufferData(GL_ELEMENT_ARRAY_BUFFER, */
+/*                  tr->indices.count * sizeof(GLuint), */
+/*                  tr->indices.items, */
+/*                  GL_STATIC_DRAW); */
+
+/*     const vec2s p1 = (vec2s) { .x=basepos.x,           .y=basepos.y }; */
+/*     const vec2s p2 = (vec2s) { .x=basepos.x,           .y=(basepos.y + height) }; */
+/*     const vec2s p3 = (vec2s) { .x=(basepos.x + width), .y=basepos.y }; */
+/*     const vec2s p4 = (vec2s) { .x=(basepos.x + width), .y=(basepos.y + height) }; */
+
+/*     const vec2s uv1 = (vec2s) { .x=0, .y=tr->font.atlas.height }; */
+/*     const vec2s uv2 = (vec2s) { .x=0, .y=0 }; */
+/*     const vec2s uv3 = (vec2s) { .x=tr->font.atlas.width, .y=tr->font.atlas.height }; */
+/*     const vec2s uv4 = (vec2s) { .x=tr->font.atlas.width, .y=0 }; */
+
+/*     const TextVertex v1 = (TextVertex){ p1, color, uv1 }; */
+/*     const TextVertex v2 = (TextVertex){ p2, color, uv2 }; */
+/*     const TextVertex v3 = (TextVertex){ p3, color, uv3 }; */
+/*     const TextVertex v4 = (TextVertex){ p4, color, uv4 }; */
+
+/*     const TextVertex v1 = */ 
+
+/*     da_append(&da->vertices */
+
+/*     da_append(&da->indices, 0); */
+/*     da_append(&da->indices, 1); */
+/*     da_append(&da->indices, 2); */
+/*     da_append(&da->indices, 2); */
+/*     da_append(&da->indices, 3); */
+/*     da_append(&da->indices, 0); */
+
+/*     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); */
+    
+/*     gl_check_error(); */
+
+/*     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); */
+/*     glBindBuffer(GL_ARRAY_BUFFER, 0); */
+/*     glBindVertexArray(0); */
+/*     glBindTexture(GL_TEXTURE_2D, 0); */
+/*     glUseProgram(0); */
+/* } */
 

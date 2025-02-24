@@ -126,6 +126,10 @@ void draw_debug_info(void)
               (vec2s){ .x=100, .y=s_winsize.y-100 }, TEXT_ALIGN_LEFT, 
               32, 0, s_color_white);
 
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
     textrenderer_flush(&s_textrenderer);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
 }
 
