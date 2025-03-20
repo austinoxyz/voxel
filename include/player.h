@@ -23,11 +23,7 @@ typedef struct Player {
     Bbox bbox;
     float width;
     float height;
-    struct {
-        PlayerModelVertex *items;
-        size_t count;
-        size_t capacity;
-    } vertices;
+    list(PlayerModelVertex, vertices);
     World *world;
     bool grounded;
 } Player;

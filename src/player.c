@@ -2,6 +2,7 @@
 #include "window.h"
 #include "input.h"
 #include "world.h"
+#include "chunkmanager.h"
 
 #include "playervertices.h"
 
@@ -13,7 +14,8 @@ void player_load_vertices(Player *player);
 int player_init(Player *player, World *world)
 {
     glm_vec3_zero(player->vel);
-    glm_vec3_copy((vec3){ 3, 5, 3 }, player->pos);
+    glm_vec3_copy((vec3){ 3, 35, 3 }, player->pos);
+    glm_vec3_copy((vec3){ 0, 0, 0 }, player->vel);
 
     player->world    = world;
     player->width    = 0.7f;
@@ -60,11 +62,11 @@ int player_init(Player *player, World *world)
 
     shader_set_uniform_vec3(player->shader, "light.color", &world->lightsource.color.raw[0]);
     shader_set_uniform_vec3(player->shader, "light.pos",   &world->lightsource.pos.raw[0]);
-    shader_set_uniform_vec3(player->shader, "light.ambient",  (vec3){ 0.2, 0.2, 0.2 });
+    shader_set_uniform_vec3(player->shader, "light.ambient",  (vec3){ 0.4, 0.4, 0.4 });
     shader_set_uniform_vec3(player->shader, "light.diffuse",  (vec3){ 0.5, 0.5, 0.5 });
     shader_set_uniform_vec3(player->shader, "light.specular", (vec3){ 1.0, 1.0, 1.0 });
 
-    shader_set_uniform_vec3(player->shader,  "material.ambient",  (vec3){ 0.5, 0.5, 0.5 });
+    shader_set_uniform_vec3(player->shader,  "material.ambient",  (vec3){ 0.8, 0.8, 0.8 });
     shader_set_uniform_vec3(player->shader,  "material.diffuse",  (vec3){ 0.5, 0.5, 0.5 });
     shader_set_uniform_vec3(player->shader,  "material.specular", (vec3){ 0.5, 0.5, 0.5  });
     shader_set_uniform_float(player->shader, "material.shininess", 32.0f);
@@ -127,29 +129,38 @@ void player_handle_input(Player *player, float dt)
         glm_vec3_add(vel_offset, tmp, vel_offset);
     }
 
-    /* if (key_is_down('Q')) { */
-    /*     glm_vec3_copy((vec3){0, -1, 0 }, tmp); */
-    /*     glm_vec3_normalize(tmp); */
-    /*     glm_vec3_add(vel_offset, tmp, vel_offset); */
-    /* } */
-    /* if (key_is_down('E')) { */
-    /*     glm_vec3_copy((vec3){0, 1, 0 }, tmp); */
-    /*     glm_vec3_normalize(tmp); */
-    /*     glm_vec3_add(vel_offset, tmp, vel_offset); */
-    /* } */
+    if (key_is_down('Q')) {
+        glm_vec3_copy((vec3){0, -1, 0 }, tmp);
+        glm_vec3_normalize(tmp);
+        glm_vec3_add(vel_offset, tmp, vel_offset);
+    }
+    if (key_is_down('E')) {
+        glm_vec3_copy((vec3){0, 1, 0 }, tmp);
+        glm_vec3_normalize(tmp);
+        glm_vec3_add(vel_offset, tmp, vel_offset);
+    }
 
+    float velocity_scale = 20.0f;
+    if (keymodifier_is_down(KEYMODIFIER_L_SHIFT)) {
+        velocity_scale = 80.0f;
+    }
+
+    glm_vec3_scale(vel_offset, velocity_scale, vel_offset);
     glm_vec3_copy(vel_offset, player->vel);
 
-    // FIXME: jumping
-    static const float jumpvel = 1.0f;
-    if (player->grounded && key_pressed('E')) {
-        player->vel[1] += jumpvel;
-        player->grounded = false;
-    }
+    /* // FIXME: jumping */
+    /* static const float jumpvel = 10.0f; */
+    /* if (player->grounded && key_pressed('E')) { */
+    /*     player->vel[1] += jumpvel; */
+    /*     player->grounded = false; */
+    /* } */
 }
 
 bool player_collides_with_world_at_pos(Player *player, vec3 nextpos)
 {
+    ivec3s chunkpos = chunkpos_from_worldpos(player->pos);
+    if (!get_chunk(&player->world->chunkmanager, chunkpos)) { return false; }
+
     Bbox bbox = make_bbox( 
         nextpos[0] - player->width/2, 
         nextpos[1] - player->height/2, 
@@ -217,14 +228,14 @@ void player_send_to_ground(Player *player)
     v3[0] += player->width/2;  v3[3] += player->width/2;
     v4[0] += player->width/2;  v4[3] -= player->width/2;
 
-    mat4 rot0, rot1;
-    glm_rotate_make(rot0, player->camera.yaw, (vec3){0.0f, 1.0f, 0.0f});
-    glm_rotate_make(rot1, -player->camera.yaw, (vec3){0.0f, 1.0f, 0.0f});
+/*     mat4 rot0, rot1; */
+/*     glm_rotate_make(rot0, player->camera.yaw, (vec3){0.0f, 1.0f, 0.0f}); */
+/*     glm_rotate_make(rot1, -player->camera.yaw, (vec3){0.0f, 1.0f, 0.0f}); */
 
-    glm_mat4_mulv3(rot0, v1, 1.0f, v1);
-    glm_mat4_mulv3(rot0, v2, 1.0f, v2);
-    glm_mat4_mulv3(rot0, v3, 1.0f, v3);
-    glm_mat4_mulv3(rot0, v4, 1.0f, v4);
+/*     glm_mat4_mulv3(rot0, v1, 1.0f, v1); */
+/*     glm_mat4_mulv3(rot0, v2, 1.0f, v2); */
+/*     glm_mat4_mulv3(rot0, v3, 1.0f, v3); */
+/*     glm_mat4_mulv3(rot0, v4, 1.0f, v4); */
 
     glm_vec3_add(player->pos, v1, v1);
     glm_vec3_add(player->pos, v2, v2);
@@ -238,7 +249,7 @@ void player_send_to_ground(Player *player)
         Block b4 = world_blockat_worldpos(player->world, v4);
 
         if (b1.type != BLOCK_AIR) {
-            glm_mat4_mulv3(rot1, v1, 1.0f, v1);
+            /* glm_mat4_mulv3(rot1, v1, 1.0f, v1); */
             vec3 blockpos;
             worldpos_from_blockworldpos(blockworldpos_from_worldpos(v1), blockpos);
             v1[1] += BLOCK_SIDELEN - fmodf(v1[1], BLOCK_SIDELEN) + player->height/2;
@@ -246,7 +257,7 @@ void player_send_to_ground(Player *player)
             glm_vec3_copy(v1, player->pos);
             break;
         } else if (b2.type != BLOCK_AIR) {
-            glm_mat4_mulv3(rot1, v2, 1.0f, v2);
+            /* glm_mat4_mulv3(rot1, v2, 1.0f, v2); */
             vec3 blockpos;
             worldpos_from_blockworldpos(blockworldpos_from_worldpos(v2), blockpos);
             v2[1] += BLOCK_SIDELEN - fmodf(v2[2], BLOCK_SIDELEN) + player->height/2;
@@ -254,7 +265,7 @@ void player_send_to_ground(Player *player)
             glm_vec3_copy(v2, player->pos);
             break;
         } else if (b3.type != BLOCK_AIR) {
-            glm_mat4_mulv3(rot1, v3, 1.0f, v3);
+            /* glm_mat4_mulv3(rot1, v3, 1.0f, v3); */
             vec3 blockpos;
             worldpos_from_blockworldpos(blockworldpos_from_worldpos(v3), blockpos);
             v3[1] += BLOCK_SIDELEN - fmodf(v3[3], BLOCK_SIDELEN) + player->height/2;
@@ -262,7 +273,7 @@ void player_send_to_ground(Player *player)
             glm_vec3_copy(v3, player->pos);
             break;
         } else if (b4.type != BLOCK_AIR) {
-            glm_mat4_mulv3(rot1, v4, 1.0f, v4);
+            /* glm_mat4_mulv3(rot1, v4, 1.0f, v4); */
             vec3 blockpos;
             worldpos_from_blockworldpos(blockworldpos_from_worldpos(v4), blockpos);
             v4[1] += BLOCK_SIDELEN - fmodf(v4[4], BLOCK_SIDELEN) + player->height/2;
@@ -283,28 +294,28 @@ void player_update(Player *player, float dt)
     vec3 vel, nextpos, gravpos;
     float yvel_off;
 
-    if (!player->grounded) {
-        glm_vec3_copy(player->pos, gravpos);
+    /* if (!player->grounded) { */
+    /*     glm_vec3_copy(player->pos, gravpos); */
 
-        static const float gravity = 0.015f;
-        yvel_off = player->vel[1];
-        yvel_off -= gravity * dt;
-        gravpos[1] += yvel_off;
+    /*     /1* static const float gravity = 0.015f; *1/ */
+    /*     /1* yvel_off = player->vel[1]; *1/ */
+    /*     /1* yvel_off -= gravity * dt; *1/ */
+    /*     /1* gravpos[1] += yvel_off; *1/ */
 
-        if (!player_collides_with_world_at_pos(player, gravpos)) {
-            player->vel[1] += yvel_off;
-        } else {
-            player_send_to_ground(player);
-            player->grounded = true;
-        }
-    }
+    /*     if (!player_collides_with_world_at_pos(player, gravpos)) { */
+    /*         player->vel[1] += yvel_off; */
+    /*     } else { */
+    /*         player_send_to_ground(player); */
+    /*         player->grounded = true; */
+    /*     } */
+    /* } */
 
     static const float move_speed = 0.002f;
     glm_vec3_scale(player->vel, move_speed * dt, vel);
     glm_vec3_add(player->pos, vel, nextpos);
-    if (!player_collides_with_world_at_pos(player, nextpos)) {
+    /* if (!player_collides_with_world_at_pos(player, nextpos)) { */
         glm_vec3_copy(nextpos, player->pos);
-    }
+    /* } */
 
     vec3 campos;
     player_compute_camera_pos(player, campos);
@@ -402,41 +413,41 @@ void player_load_vertices(Player *player)
     const float Y = player->height/2.0f;
     const float Z = player->width/2.0f;
 
-    da_append(&player->vertices, make_player_model_vertex( -X, -Y, -X,    0,  0, -1,   1, 1, 1, 1 ));
-    da_append(&player->vertices, make_player_model_vertex(  X,  Y, -X,    0,  0, -1,   1, 1, 1, 1 ));
-    da_append(&player->vertices, make_player_model_vertex(  X, -Y, -X,    0,  0, -1,   1, 1, 1, 1 ));
-    da_append(&player->vertices, make_player_model_vertex(  X,  Y, -X,    0,  0, -1,   1, 1, 1, 1 ));
-    da_append(&player->vertices, make_player_model_vertex( -X, -Y, -X,    0,  0, -1,   1, 1, 1, 1 ));
-    da_append(&player->vertices, make_player_model_vertex( -X,  Y, -X,    0,  0, -1,   1, 1, 1, 1 ));
-    da_append(&player->vertices, make_player_model_vertex( -X, -Y,  X,    0,  0,  1,   1, 1, 1, 1 ));
-    da_append(&player->vertices, make_player_model_vertex(  X, -Y,  X,    0,  0,  1,   1, 1, 1, 1 ));
-    da_append(&player->vertices, make_player_model_vertex(  X,  Y,  X,    0,  0,  1,   1, 1, 1, 1 ));
-    da_append(&player->vertices, make_player_model_vertex(  X,  Y,  X,    0,  0,  1,   1, 1, 1, 1 ));
-    da_append(&player->vertices, make_player_model_vertex( -X,  Y,  X,    0,  0,  1,   1, 1, 1, 1 ));
-    da_append(&player->vertices, make_player_model_vertex( -X, -Y,  X,    0,  0,  1,   1, 1, 1, 1 ));
-    da_append(&player->vertices, make_player_model_vertex( -X,  Y,  X,   -1,  0,  0,   1, 1, 1, 1 ));
-    da_append(&player->vertices, make_player_model_vertex( -X,  Y, -X,   -1,  0,  0,   1, 1, 1, 1 ));
-    da_append(&player->vertices, make_player_model_vertex( -X, -Y, -X,   -1,  0,  0,   1, 1, 1, 1 ));
-    da_append(&player->vertices, make_player_model_vertex( -X, -Y, -X,   -1,  0,  0,   1, 1, 1, 1 ));
-    da_append(&player->vertices, make_player_model_vertex( -X, -Y,  X,   -1,  0,  0,   1, 1, 1, 1 ));
-    da_append(&player->vertices, make_player_model_vertex( -X,  Y,  X,   -1,  0,  0,   1, 1, 1, 1 ));
-    da_append(&player->vertices, make_player_model_vertex(  X,  Y,  X,    1,  0,  0,   1, 1, 1, 1 ));
-    da_append(&player->vertices, make_player_model_vertex(  X,  Y, -X,    1,  0,  0,   1, 1, 1, 1 ));
-    da_append(&player->vertices, make_player_model_vertex(  X, -Y, -X,    1,  0,  0,   1, 1, 1, 1 ));
-    da_append(&player->vertices, make_player_model_vertex(  X, -Y, -X,    1,  0,  0,   1, 1, 1, 1 ));
-    da_append(&player->vertices, make_player_model_vertex(  X, -Y,  X,    1,  0,  0,   1, 1, 1, 1 ));
-    da_append(&player->vertices, make_player_model_vertex(  X,  Y,  X,    1,  0,  0,   1, 1, 1, 1 ));
-    da_append(&player->vertices, make_player_model_vertex( -X, -Y, -X,    0, -1,  0,   1, 1, 1, 1 ));
-    da_append(&player->vertices, make_player_model_vertex(  X, -Y, -X,    0, -1,  0,   1, 1, 1, 1 ));
-    da_append(&player->vertices, make_player_model_vertex(  X, -Y,  X,    0, -1,  0,   1, 1, 1, 1 ));
-    da_append(&player->vertices, make_player_model_vertex(  X, -Y,  X,    0, -1,  0,   1, 1, 1, 1 ));
-    da_append(&player->vertices, make_player_model_vertex( -X, -Y,  X,    0, -1,  0,   1, 1, 1, 1 ));
-    da_append(&player->vertices, make_player_model_vertex( -X, -Y, -X,    0, -1,  0,   1, 1, 1, 1 ));
-    da_append(&player->vertices, make_player_model_vertex( -X,  Y, -X,    0,  1,  0,   1, 1, 1, 1 ));
-    da_append(&player->vertices, make_player_model_vertex(  X,  Y,  X,    0,  1,  0,   1, 1, 1, 1 ));
-    da_append(&player->vertices, make_player_model_vertex(  X,  Y, -X,    0,  1,  0,   1, 1, 1, 1 ));
-    da_append(&player->vertices, make_player_model_vertex(  X,  Y,  X,    0,  1,  0,   1, 1, 1, 1 ));
-    da_append(&player->vertices, make_player_model_vertex( -X,  Y, -X,    0,  1,  0,   1, 1, 1, 1 ));
-    da_append(&player->vertices, make_player_model_vertex( -X,  Y,  X,    0,  1,  0,   1, 1, 1, 1 ));
+    list_append(&player->vertices, make_player_model_vertex( -X, -Y, -X,    0,  0, -1,   1, 1, 1, 1 ));
+    list_append(&player->vertices, make_player_model_vertex(  X,  Y, -X,    0,  0, -1,   1, 1, 1, 1 ));
+    list_append(&player->vertices, make_player_model_vertex(  X, -Y, -X,    0,  0, -1,   1, 1, 1, 1 ));
+    list_append(&player->vertices, make_player_model_vertex(  X,  Y, -X,    0,  0, -1,   1, 1, 1, 1 ));
+    list_append(&player->vertices, make_player_model_vertex( -X, -Y, -X,    0,  0, -1,   1, 1, 1, 1 ));
+    list_append(&player->vertices, make_player_model_vertex( -X,  Y, -X,    0,  0, -1,   1, 1, 1, 1 ));
+    list_append(&player->vertices, make_player_model_vertex( -X, -Y,  X,    0,  0,  1,   1, 1, 1, 1 ));
+    list_append(&player->vertices, make_player_model_vertex(  X, -Y,  X,    0,  0,  1,   1, 1, 1, 1 ));
+    list_append(&player->vertices, make_player_model_vertex(  X,  Y,  X,    0,  0,  1,   1, 1, 1, 1 ));
+    list_append(&player->vertices, make_player_model_vertex(  X,  Y,  X,    0,  0,  1,   1, 1, 1, 1 ));
+    list_append(&player->vertices, make_player_model_vertex( -X,  Y,  X,    0,  0,  1,   1, 1, 1, 1 ));
+    list_append(&player->vertices, make_player_model_vertex( -X, -Y,  X,    0,  0,  1,   1, 1, 1, 1 ));
+    list_append(&player->vertices, make_player_model_vertex( -X,  Y,  X,   -1,  0,  0,   1, 1, 1, 1 ));
+    list_append(&player->vertices, make_player_model_vertex( -X,  Y, -X,   -1,  0,  0,   1, 1, 1, 1 ));
+    list_append(&player->vertices, make_player_model_vertex( -X, -Y, -X,   -1,  0,  0,   1, 1, 1, 1 ));
+    list_append(&player->vertices, make_player_model_vertex( -X, -Y, -X,   -1,  0,  0,   1, 1, 1, 1 ));
+    list_append(&player->vertices, make_player_model_vertex( -X, -Y,  X,   -1,  0,  0,   1, 1, 1, 1 ));
+    list_append(&player->vertices, make_player_model_vertex( -X,  Y,  X,   -1,  0,  0,   1, 1, 1, 1 ));
+    list_append(&player->vertices, make_player_model_vertex(  X,  Y,  X,    1,  0,  0,   1, 1, 1, 1 ));
+    list_append(&player->vertices, make_player_model_vertex(  X,  Y, -X,    1,  0,  0,   1, 1, 1, 1 ));
+    list_append(&player->vertices, make_player_model_vertex(  X, -Y, -X,    1,  0,  0,   1, 1, 1, 1 ));
+    list_append(&player->vertices, make_player_model_vertex(  X, -Y, -X,    1,  0,  0,   1, 1, 1, 1 ));
+    list_append(&player->vertices, make_player_model_vertex(  X, -Y,  X,    1,  0,  0,   1, 1, 1, 1 ));
+    list_append(&player->vertices, make_player_model_vertex(  X,  Y,  X,    1,  0,  0,   1, 1, 1, 1 ));
+    list_append(&player->vertices, make_player_model_vertex( -X, -Y, -X,    0, -1,  0,   1, 1, 1, 1 ));
+    list_append(&player->vertices, make_player_model_vertex(  X, -Y, -X,    0, -1,  0,   1, 1, 1, 1 ));
+    list_append(&player->vertices, make_player_model_vertex(  X, -Y,  X,    0, -1,  0,   1, 1, 1, 1 ));
+    list_append(&player->vertices, make_player_model_vertex(  X, -Y,  X,    0, -1,  0,   1, 1, 1, 1 ));
+    list_append(&player->vertices, make_player_model_vertex( -X, -Y,  X,    0, -1,  0,   1, 1, 1, 1 ));
+    list_append(&player->vertices, make_player_model_vertex( -X, -Y, -X,    0, -1,  0,   1, 1, 1, 1 ));
+    list_append(&player->vertices, make_player_model_vertex( -X,  Y, -X,    0,  1,  0,   1, 1, 1, 1 ));
+    list_append(&player->vertices, make_player_model_vertex(  X,  Y,  X,    0,  1,  0,   1, 1, 1, 1 ));
+    list_append(&player->vertices, make_player_model_vertex(  X,  Y, -X,    0,  1,  0,   1, 1, 1, 1 ));
+    list_append(&player->vertices, make_player_model_vertex(  X,  Y,  X,    0,  1,  0,   1, 1, 1, 1 ));
+    list_append(&player->vertices, make_player_model_vertex( -X,  Y, -X,    0,  1,  0,   1, 1, 1, 1 ));
+    list_append(&player->vertices, make_player_model_vertex( -X,  Y,  X,    0,  1,  0,   1, 1, 1, 1 ));
 }
 

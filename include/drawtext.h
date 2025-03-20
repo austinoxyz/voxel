@@ -14,7 +14,6 @@ typedef struct GlyphMetric {
     float texture_x;
 } GlyphMetric;
 
-#define GLYPH_ATLAS_GLYPH_PADDING (1.0f)
 #define GLYPH_ATLAS_METRICS_CAPACITY (128)
 typedef struct GlyphAtlas {
     FT_UInt     width, height;

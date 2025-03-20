@@ -60,58 +60,10 @@ bool is_ascii_whitespace(char c);
 
 double map_range(double value, double in_min, double in_max, double out_min, double out_max);
 
-float clamp(float x, float low, float high);
+double clamp(double x, double low, double high);
 
-#ifndef DA_INIT_CAP
-#define DA_INIT_CAP (256)
+double fade(double t);
+
+double lerp(double x1, double x2, double t);
+
 #endif
-
-#define da_init(da)                                                              \
-    do {                                                                         \
-        (da)->count = 0;                                                         \
-        (da)->capacity = DA_INIT_CAP;                                            \
-        (da)->items = NULL;                                                      \
-        (da)->items = realloc((da)->items, (da)->capacity*sizeof(*(da)->items)); \
-        assert((da)->items != NULL && "Buy more RAM lol");                       \
-    } while (0)
-
-#define da_append(da, item)                                                            \
-    do {                                                                               \
-        if ((da)->count >= (da)->capacity) {                                           \
-            (da)->capacity = (da)->capacity == 0 ? DA_INIT_CAP : (da)->capacity*2;     \
-            (da)->items = realloc((da)->items, (da)->capacity*sizeof(*(da)->items));   \
-            assert((da)->items != NULL && "Buy more RAM lol");                         \
-        }                                                                              \
-                                                                                       \
-        (da)->items[(da)->count++] = (item);                                           \
-    } while (0)
-
-#define da_free(da) free((da).items)
-
-#define da_append_many(da, new_items, new_items_count)                                          \
-    do {                                                                                        \
-        if ((da)->count + (new_items_count) > (da)->capacity) {                                 \
-            if ((da)->capacity == 0) {                                                          \
-                (da)->capacity = DA_INIT_CAP;                                                   \
-            }                                                                                   \
-            while ((da)->count + (new_items_count) > (da)->capacity) {                          \
-                (da)->capacity *= 2;                                                            \
-            }                                                                                   \
-            (da)->items = realloc((da)->items, (da)->capacity*sizeof(*(da)->items));            \
-            assert((da)->items != NULL && "Buy more RAM lol");                                  \
-        }                                                                                       \
-        memcpy((da)->items + (da)->count, (new_items), (new_items_count)*sizeof(*(da)->items)); \
-        (da)->count += (new_items_count);                                                       \
-    } while (0)
-
-#define da_resize(da, new_size)                                                        \
-    do {                                                                               \
-        if ((new_size) > (da)->capacity) {                                             \
-            (da)->capacity = (new_size);                                               \
-            (da)->items = realloc((da)->items, (da)->capacity * sizeof(*(da)->items)); \
-            assert((da)->items != NULL && "Buy more RAM lol");                         \
-        }                                                                              \
-        (da)->count = (new_size);                                                      \
-    } while (0)
-#endif
-

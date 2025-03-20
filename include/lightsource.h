@@ -18,16 +18,8 @@ typedef struct LightSource {
     vec3s pos;
     vec3s color;
     float radius;
-    struct {
-        LightSourceVertex *items;
-        size_t count;
-        size_t capacity;
-    } vertices;
-    struct {
-        GLuint *items;
-        size_t count;
-        size_t capacity;
-    } indices;
+    list(LightSourceVertex, vertices);
+    list(GLuint, indices);
     World *world;
 } LightSource;
 

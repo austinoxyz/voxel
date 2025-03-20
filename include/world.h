@@ -29,4 +29,6 @@ Block world_blockat(World *world, BlockWorldPos pos);
 BlockWorldPos blockworldpos_from_worldpos(vec3 worldpos);
 void worldpos_from_blockworldpos(BlockWorldPos pos, vec3 result);
 
+void put_block(World *world, Block block, BlockWorldPos pos);
+
 #endif

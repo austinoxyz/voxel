@@ -17,28 +17,30 @@ typedef struct BlockVertex {
 
 typedef struct World World;
 
-typedef ivec3s ChunkId;
-
 typedef struct Chunk {
-    ChunkId id;
-    bool dirty;
-    Block ***blocks;
+    ivec3s id;
     World *world;
+
+    Block ***blocks;
+
     Shader shader;
     GLuint vao, vbo;
+    list(BlockVertex, vertices);
     mat4 model;
-    struct {
-        BlockVertex *items;
-        size_t count;
-        size_t capacity;
-    } vertices;
+
+    bool dirty;
+    bool loaded;
 } Chunk;
 
-int chunk_new(Chunk *chunk, ChunkId pos, World *world, Shader shader, GLuint vao, GLuint vbo);
+int chunk_new(Chunk *chunk, ivec3s pos, World *world, Shader shader);
 void chunk_delete(Chunk *chunk);
-void chunk_rebuild_mesh(Chunk *chunk);
+
 void chunk_update(Chunk *chunk, float dt);
 void chunk_render(Chunk *chunk, float dt);
+
+void chunk_load(Chunk *chunk);
+void chunk_rebuild_mesh(Chunk *chunk);
+
 void chunk_put_block(Chunk *chunk, Block block, ivec3s pos);
 
 #endif

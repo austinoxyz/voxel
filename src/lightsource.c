@@ -24,8 +24,8 @@ int lightsource_init(LightSource *lightsource, float radius, vec3s pos, vec3s co
     glm_translate_make(model, &lightsource->pos.raw[0]);
     shader_set_uniform_mat4(lightsource->shader, "model", model);
 
-    da_init(&lightsource->vertices);
-    da_init(&lightsource->indices);
+    list_init(&lightsource->vertices);
+    list_init(&lightsource->indices);
 
     lightsource_compute_sphere(lightsource, color);
 
@@ -74,8 +74,8 @@ void lightsource_deinit(LightSource *lightsource)
     glDeleteVertexArrays(1, &lightsource->vao);
     glDeleteProgram(lightsource->shader);
 
-    da_free(lightsource->vertices);
-    da_free(lightsource->indices);
+    list_free(lightsource->vertices);
+    list_free(lightsource->indices);
 
 }
 
@@ -141,7 +141,7 @@ void lightsource_compute_sphere(LightSource *lightsource, vec3s color)
             const LightSourceVertex v = (LightSourceVertex) {
                 { x, y, z }, { nx, ny, nz }, { color.r, color.g, color.b, 1 }
             };
-            da_append(&lightsource->vertices, v);
+            list_append(&lightsource->vertices, v);
         }
     }
 
@@ -152,14 +152,14 @@ void lightsource_compute_sphere(LightSource *lightsource, vec3s color)
         k2 = k1 + sector_count + 1;
         for (int j = 0; j < sector_count; ++j, ++k1, ++k2) {
             if (i != 0) {
-                da_append(&lightsource->indices, k1);
-                da_append(&lightsource->indices, k2);
-                da_append(&lightsource->indices, k1 + 1);
+                list_append(&lightsource->indices, k1);
+                list_append(&lightsource->indices, k2);
+                list_append(&lightsource->indices, k1 + 1);
             }
             if (i != (stack_count-1)) {
-                da_append(&lightsource->indices, k1 + 1);
-                da_append(&lightsource->indices, k2);
-                da_append(&lightsource->indices, k2 + 1);
+                list_append(&lightsource->indices, k1 + 1);
+                list_append(&lightsource->indices, k2);
+                list_append(&lightsource->indices, k2 + 1);
             }
         }
     }

@@ -9,9 +9,8 @@ out vec4 color;
 
 void main()
 {    
-    // vec4 sampled = vec4(1.0, 1.0, 1.0, texture(image, fsUv).r);
-    // color = vec4(fsColor.rgb, 1.0) * sampled;
-    color = vec4(1.0);
+    vec4 sampled = vec4(1.0, 1.0, 1.0, texture(image, fsUv).r);
+    color = vec4(fsColor.rgb, 1.0) * sampled;
 
     // anti aliasing
 //    float d = texture(image, out_uv).r;

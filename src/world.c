@@ -2,6 +2,56 @@
 
 #include "common.h"
 
+#include "noise.h"
+
+Chunk make_chunk(World *world, ivec3s chunkpos);
+
+void world_prepare(World *world)
+{
+    int seed = rand();
+    int r = rand() % 40;
+    for (int cx = -6; cx <= 6; ++cx) {
+        for (int cz = -6; cz <= 6; ++cz) {
+            for (int x = 0; x < CHUNK_SZ; ++x) {
+                for (int z = 0; z < CHUNK_SZ; ++z) {
+                    double nx = cx*CHUNK_SZ + x;
+                    double nz = cz*CHUNK_SZ + z;
+
+                    /* double n = fbm(CHUNK_SZ*nx+x, CHUNK_SZ*nz+z, 3); */
+                    double n = simplex_noise2d(0.0001*(CHUNK_SZ*nx+x), 0.0001*(CHUNK_SZ*nz+z));
+
+                    printf("n = %lf\n", n);
+                    /* n += 0.23f; */
+                    n = fade(fade(n));
+                    n = clamp(tanh(n*1.85), 0, 1);
+                    /* n = pow(n, 2.0); */
+                    /* n = glm_smoothstep(0, 1, n); */
+
+                    static const int ymax = 6*CHUNK_SZ;
+                    int yn = (int) clamp(floorf(ymax*n), 0, ymax-1);
+
+                    const int watercutoff = 12;
+                    if (yn <= watercutoff) {
+                        for (int y = 0; y < watercutoff; ++y) {
+                            put_block(world, (Block){ BLOCK_WATER },
+                                      (BlockWorldPos) {
+                                          .chunk=(ivec3s){ .x=cx, .y=0, .z=cz },
+                                          .block=(ivec3s){ .x=x,  .y=y, .z=z  }});
+                        }
+                    } else {
+                        for (int y = 0; y < yn; ++y) {
+                            put_block(world, (Block){ BLOCK_GRASS }, 
+                                      (BlockWorldPos) {
+                                          .chunk=(ivec3s){ .x=cx, .y=y/CHUNK_SZ, .z=cz },
+                                          .block=(ivec3s){ .x=x,  .y=y%CHUNK_SZ, .z=z  }});
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 int world_init(World *world, Player *player)
 {
     assert(world);
@@ -9,7 +59,7 @@ int world_init(World *world, Player *player)
     world->player = player;
 
     const float radius = 0.5f;
-    const vec3s pos = (vec3s){ .x=2.5, .y=2.5, .z=3 };
+    const vec3s pos = (vec3s){ .x=100, .y=200, .z=100 };
     const vec3s color = (vec3s){ .r=1, .g=1, .b=1 };
     if (0 > lightsource_init(&world->lightsource, radius, pos, color, world)) {
         err("Failed to initialize light source.");
@@ -21,29 +71,7 @@ int world_init(World *world, Player *player)
         return -2;
     }
 
-    for (int x = -4; x <= 4; ++x) {
-        for (int y = -4; y <= 4; ++y) {
-            for (int z = -4; z <= 4; ++z) {
-                Chunk chunk;
-                if (0 > chunk_new(&chunk, (ChunkId){ .x=x, .y=y, .z=z }, 
-                                  world, world->chunkmanager.shader, 
-                                  world->chunkmanager.vao, world->chunkmanager.vbo)) 
-                {
-                    err("Failed to initialize chunk.");
-                    return -2;
-                }
-                if (y == 0) {
-                    for (int x2 = 0; x2 < (int)CHUNK_SZ; ++x2) {
-                        for (int z2 = 0; z2 < (int)CHUNK_SZ; ++z2) {
-                            chunk_put_block(&chunk, (Block){ BLOCK_STONE }, 
-                                            (ivec3s){ .x=x2, .y=0, .z=z2 });
-                        }
-                    }
-                }
-                da_append(&world->chunkmanager.chunks, chunk);
-            }
-        }
-    }
+    world_prepare(world);
 
     return 0;
 }
@@ -84,7 +112,15 @@ Block world_blockat(World *world, BlockWorldPos pos)
 {
     assert(world);
 
-    Chunk *chunk = chunkmanager_get_chunk(&world->chunkmanager, pos.chunk);
+    Chunk *chunk = get_chunk(&world->chunkmanager, pos.chunk);
+    if (!chunk) {
+        verr("tried to get block at position where chunk doesn't exist "
+             "[chunkpos=(%0.3f,%0.3f),blockpos=(%0.3f,%0.3f,%0.3f)]", 
+             pos.chunk.x,pos.chunk.y,pos.block.x,pos.block.y,pos.block.z);
+        __builtin_trap();
+        cleanup_and_exit(2);
+    }
+
     return chunk->blocks[pos.block.x][pos.block.y][pos.block.z];
 }
 
@@ -110,8 +146,32 @@ BlockWorldPos blockworldpos_from_worldpos(vec3 worldpos)
 void worldpos_from_blockworldpos(BlockWorldPos pos, vec3 result) 
 {
     result[0] = CHUNK_SIDELEN*pos.chunk.x + BLOCK_SIDELEN*pos.block.x;
-    result[1] = CHUNK_SIDELEN*pos.chunk.y + BLOCK_SIDELEN*pos.block.y;
-    result[2] = CHUNK_SIDELEN*pos.chunk.z + BLOCK_SIDELEN*pos.block.z;
+    result[1] = BLOCK_SIDELEN*pos.block.y;
+    result[2] = CHUNK_SIDELEN*pos.chunk.y + BLOCK_SIDELEN*pos.block.z;
 }
 
+Chunk make_chunk(World *world, ivec3s chunkpos)
+{
+    assert(world);
+
+    Chunk chunk;
+    if (0 > chunk_new(&chunk, chunkpos, world, world->chunkmanager.shader)) {
+        err("Failed to initialize chunk.");
+        cleanup_and_exit(2);
+    }
+
+    return chunk;
+}
+
+void put_block(World *world, Block block, BlockWorldPos pos)
+{
+    Chunk *chunk;
+    if (!(chunk = get_chunk(&world->chunkmanager, pos.chunk))) {
+        Chunk chunk = make_chunk(world, pos.chunk);
+        chunk_put_block(&chunk, block, pos.block);
+        list_append(&world->chunkmanager.chunks, chunk);
+        return;
+    }
+    chunk_put_block(chunk, block, pos.block);
+}
 

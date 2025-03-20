@@ -149,7 +149,7 @@ double map_range(double value, double in_min, double in_max, double out_min, dou
     return out_min + (value - in_min) * (out_max - out_min) / (in_max - in_min);
 }
 
-float clamp(float x, float low, float high)
+double clamp(double x, double low, double high)
 {
     if (x < low) {
         return low;
@@ -160,3 +160,12 @@ float clamp(float x, float low, float high)
     }
 }
 
+double fade(double t) 
+{
+    return ((6*t - 15)*t + 10)*t*t*t;
+}
+
+double lerp(double x1, double x2, double t) 
+{
+    return x1 + t * (x2 - x1);
+}

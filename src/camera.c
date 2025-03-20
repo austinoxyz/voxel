@@ -85,6 +85,8 @@ void camera_compute_view_and_projection(Camera *camera)
     glm_vec3_cross(camera->dir, camera->right, camera->up);
     glm_vec3_normalize(camera->up);
 
+    const float znear = 0.1f;
+    const float zfar = 1000.0f;
     glm_look(camera->pos, camera->dir, camera->up, camera->view);
-    glm_perspective(camera->fov, window_get()->aspect, 0.1f, 100.0f, camera->projection);
+    glm_perspective(camera->fov, window_get()->aspect, znear, zfar, camera->projection);
 }
