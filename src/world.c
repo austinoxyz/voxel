@@ -17,17 +17,16 @@ void world_prepare(World *world)
                     double nx = cx*CHUNK_SZ + x;
                     double nz = cz*CHUNK_SZ + z;
 
-                    /* double n = fbm(CHUNK_SZ*nx+x, CHUNK_SZ*nz+z, 3); */
-                    double n = simplex_noise2d(0.0001*(CHUNK_SZ*nx+x), 0.0001*(CHUNK_SZ*nz+z));
-
+                    double n = noise2d(0.05*(CHUNK_SZ*nx+x), 0.05*(CHUNK_SZ*nz+z));
+                    /* n += .2; */
+                    n = fade(n);
+                    n = pow(n, 4.0);
                     printf("n = %lf\n", n);
-                    /* n += 0.23f; */
-                    n = fade(fade(n));
-                    n = clamp(tanh(n*1.85), 0, 1);
-                    /* n = pow(n, 2.0); */
+
+                    /* n = clamp(tanh(n*1.25), 0, 1); */
                     /* n = glm_smoothstep(0, 1, n); */
 
-                    static const int ymax = 6*CHUNK_SZ;
+                    static const int ymax = 10*CHUNK_SZ;
                     int yn = (int) clamp(floorf(ymax*n), 0, ymax-1);
 
                     const int watercutoff = 12;
